@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StreamFlixVIP – Filmes e Séries Online</title>
+  <meta name="description" content="Assista filmes e séries online gratuitamente no StreamFlixVIP. Qualidade HD, sem cadastro." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:       #0d0d0f;
+      --surface:  #16161a;
+      --card:     #1c1c22;
+      --border:   #2a2a35;
+      --accent:   #e50914;
+      --accent2:  #ff6b35;
+      --text:     #f0f0f5;
+      --muted:    #888899;
+      --radius:   10px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+    }
+
+    /* NAV */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(13,13,15,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      height: 60px;
+    }
+    .logo {
+      font-size: 1.4rem;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+    }
+    .logo span { color: var(--accent); }
+    .nav-links {
+      display: flex;
+      gap: 24px;
+      list-style: none;
+    }
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: color .2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+
+    /* HERO */
+    .hero {
+      position: relative;
+      background: linear-gradient(135deg, #1a0008 0%, #0d0d0f 60%);
+      padding: 70px 24px 60px;
+      text-align: center;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(229,9,20,0.18) 0%, transparent 70%);
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 6vw, 3.5rem);
+      font-weight: 900;
+      line-height: 1.1;
+      position: relative;
+    }
+    .hero h1 em {
+      font-style: normal;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero p {
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 1.05rem;
+      position: relative;
+    }
+    .badge-row {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 28px;
+      position: relative;
+    }
+    .badge {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 6px 16px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--muted);
+    }
+    .badge.hot { border-color: var(--accent); color: var(--accent); }
+
+    /* SECTION */
+    .section {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 48px 20px;
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .section-header h2 {
+      font-size: 1.3rem;
+      font-weight: 700;
+    }
+    .section-header .tag {
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      letter-spacing: .5px;
+    }
+
+    /* GRID */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform .2s, border-color .2s;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      border-color: var(--accent);
+    }
+    .card-thumb {
+      width: 100%;
+      aspect-ratio: 2/3;
+      object-fit: cover;
+      display: block;
+      background: var(--surface);
+    }
+    .card-thumb-placeholder {
+      width: 100%;
+      aspect-ratio: 2/3;
+      background: linear-gradient(135deg, var(--surface), var(--border));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+    }
+    .card-info {
+      padding: 10px 12px 12px;
+    }
+    .card-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      line-height: 1.3;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .card-meta {
+      font-size: 0.75rem;
+      color: var(--muted);
+      display: flex;
+      gap: 8px;
+    }
+    .rating { color: #f5c518; }
+
+    /* PLAYER PAGE */
+    .player-page { display: none; }
+    .player-page.active { display: block; }
+    .main-content { display: block; }
+    .main-content.hidden { display: none; }
+
+    .player-section {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 32px 20px;
+    }
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 500;
+      margin-bottom: 24px;
+      transition: border-color .2s;
+      text-decoration: none;
+    }
+    .back-btn:hover { border-color: var(--accent); }
+
+    .player-wrap {
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: #000;
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 0 60px rgba(229,9,20,0.2);
+    }
+    .player-wrap iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    .movie-detail {
+      margin-top: 24px;
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+    }
+    .movie-detail-info h2 {
+      font-size: 1.6rem;
+      font-weight: 800;
+    }
+    .movie-detail-meta {
+      display: flex;
+      gap: 12px;
+      margin-top: 8px;
+      font-size: 0.85rem;
+      color: var(--muted);
+      flex-wrap: wrap;
+    }
+    .movie-detail-meta span { display: flex; align-items: center; gap: 4px; }
+    .movie-desc {
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.6;
+      max-width: 700px;
+    }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 24px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+    footer a { color: var(--muted); margin: 0 10px; text-decoration: none; }
+    footer a:hover { color: var(--text); }
+
+    @media (max-width: 500px) {
+      .nav-links { display: none; }
+      .grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Stream<span>Flix</span>VIP</div>
+  <ul class="nav-links">
+    <li><a href="#">Início</a></li>
+    <li><a href="#">Filmes</a></li>
+    <li><a href="#">Séries</a></li>
+    <li><a href="#">Lançamentos</a></li>
+  </ul>
+</nav>
+
+<!-- CONTEÚDO PRINCIPAL -->
+<div class="main-content" id="mainContent">
+  <div class="hero">
+    <h1>Filmes e Séries<br /><em>Online Grátis</em></h1>
+    <p>Sem cadastro. Sem complicação. Assista agora.</p>
+    <div class="badge-row">
+      <div class="badge hot">🔴 AO VIVO</div>
+      <div class="badge">✅ HD Grátis</div>
+      <div class="badge">🎬 Filmes</div>
+      <div class="badge">📺 Séries</div>
+      <div class="badge">🔒 Sem Cadastro</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <h2>Em Destaque</h2>
+      <span class="tag">NOVO</span>
+    </div>
+    <div class="grid" id="featuredGrid"></div>
+  </div>
+
+  <div class="section" style="padding-top:0">
+    <div class="section-header">
+      <h2>Filmes de Terror</h2>
+    </div>
+    <div class="grid" id="terrorGrid"></div>
+  </div>
+
+  <div class="section" style="padding-top:0">
+    <div class="section-header">
+      <h2>Clássicos</h2>
+    </div>
+    <div class="grid" id="classicsGrid"></div>
+  </div>
+</div>
+
+<!-- PÁGINA DO PLAYER -->
+<div class="player-page" id="playerPage">
+  <div class="player-section">
+    <button class="back-btn" onclick="goBack()">← Voltar</button>
+    <div class="player-wrap">
+      <iframe id="playerFrame"
+        src=""
+        allowfullscreen
+        allow="autoplay; encrypted-media; picture-in-picture">
+      </iframe>
+    </div>
+    <div class="movie-detail">
+      <div class="movie-detail-info">
+        <h2 id="playerTitle"></h2>
+        <div class="movie-detail-meta">
+          <span id="playerYear"></span>
+          <span id="playerRating" class="rating"></span>
+          <span id="playerGenre"></span>
+        </div>
+        <p class="movie-desc" id="playerDesc"></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p>© 2025 StreamFlixVIP. Todos os direitos reservados.</p>
+  <div style="margin-top:12px">
+    <a href="/privacidade.html">Política de Privacidade</a>
+    <a href="/termos.html">Termos de Uso</a>
+    <a href="/contato.html">Contato</a>
+    <a href="/dmca.html">DMCA</a>
+  </div>
+</footer>
+
+<script>
+  // Catálogo de filmes — adicione mais conforme quiser
+  const movies = [
+    {
+      id: 1,
+      title: "A Visão do Terror",
+      year: 1986,
+      genre: "Terror",
+      rating: "⭐ 6.8",
+      desc: "Um clássico do terror dos anos 80 que marcou gerações com sua atmosfera sombria e suspense crescente.",
+      emoji: "👁️",
+      embed: "https://streamflixvip.vidplayer.live/#ozwvn",
+      featured: true,
+      category: "terror"
+    },
+    {
+      id: 2,
+      title: "O Último Sobrevivente",
+      year: 2023,
+      genre: "Ação",
+      rating: "⭐ 7.2",
+      desc: "Em um mundo pós-apocalíptico, um grupo de sobreviventes luta para reconstruir a civilização.",
+      emoji: "🔫",
+      embed: "https://streamflixvip.vidplayer.live/#ozwvn",
+      featured: true,
+      category: "acao"
+    },
+    {
+      id: 3,
+      title: "Segredos da Noite",
+      year: 2022,
+      genre: "Suspense",
+      rating: "⭐ 7.5",
+      desc: "Uma investigadora descobre segredos obscuros enterrados no passado de uma pequena cidade.",
+      emoji: "🌙",
+      embed: "https://streamflixvip.vidplayer.live/#ozwvn",
+      featured: true,
+      category: "suspense"
+    },
+    {
+      id: 4,
+      title: "Pesadelo Sem Fim",
+      year: 1984,
+      genre: "Terror",
+      rating: "⭐ 7.1",
+      desc: "Criaturas das trevas assombram os sonhos de uma família em uma noite que nunca termina.",
+      emoji: "😱",
+      embed: "https://streamflixvip.vidplayer.live/#ozwvn",
+      featured: false,
+      category: "terror"
+    },
+    {
+      id: 5,
+      title: "Gritos na Escuridão",
+      year: 1990,
+      genre: "Terror",
+      rating: "⭐ 6.5",
+      desc: "Um grupo de amigos passa a noite em uma mansão abandonada e descobre que não estão sozinhos.",
+      emoji: "🏚️",
+      embed: "https://streamflixvip.vidplayer.live/#ozwvn",
+      featured: false,
+      category: "terror"
+    },
+    {
+      id: 6,
+      title: "O Exorcismo",
+      year: 1988,
+      genre: "Terror",
+      rating: "⭐ 7.0",
+      desc: "Um padre enfrenta forças sobrenaturais ao tentar salvar uma jovem possuída por uma entidade maligna.",
+      emoji: "✝️",
+      embed: "https://streamflixvip.vidplayer.live/#ozwvn",
+      featured: false,
+      category: "terror"
+    },
+    {
+      id: 7,
+      title: "Fuga Impossível",
+      year: 1975,
+      genre: "Clássico",
+      rating: "⭐ 8.1",
+      desc: "Um dos maiores clássicos do cinema de ação, com perseguições inesquecíveis e drama intenso.",
+      emoji: "🚗",
+      embed: "https://streamflixvip.vidplayer.live/#ozwvn",
+      featured: false,
+      category: "classico"
+    },
+    {
+      id: 8,
+      title: "O Grande Ladrão",
+      year: 1968,
+      genre: "Clássico",
+      rating: "⭐ 8.4",
+      desc: "Considerado uma obra-prima do cinema policial, este filme redefiniu o gênero para sempre.",
+      emoji: "🎩",
+      embed: "https://streamflixvip.vidplayer.live/#ozwvn",
+      featured: false,
+      category: "classico"
+    },
+    {
+      id: 9,
+      title: "Amor e Guerra",
+      year: 1970,
+      genre: "Clássico",
+      rating: "⭐ 7.9",
+      desc: "Uma história de amor épica ambientada durante os anos mais turbulentos do século XX.",
+      emoji: "❤️",
+      embed: "https://streamflixvip.vidplayer.live/#ozwvn",
+      featured: false,
+      category: "classico"
+    },
+  ];
+
+  function renderCard(movie) {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.onclick = () => openPlayer(movie);
+    card.innerHTML = `
+      <div class="card-thumb-placeholder">${movie.emoji}</div>
+      <div class="card-info">
+        <div class="card-title">${movie.title}</div>
+        <div class="card-meta">
+          <span>${movie.year}</span>
+          <span class="rating">${movie.rating}</span>
+        </div>
+      </div>
+    `;
+    return card;
+  }
+
+  function renderGrid(gridId, filter) {
+    const grid = document.getElementById(gridId);
+    movies.filter(filter).forEach(m => grid.appendChild(renderCard(m)));
+  }
+
+  renderGrid('featuredGrid', m => m.featured);
+  renderGrid('terrorGrid', m => m.category === 'terror');
+  renderGrid('classicsGrid', m => m.category === 'classico');
+
+  function openPlayer(movie) {
+    document.getElementById('mainContent').classList.add('hidden');
+    document.getElementById('playerPage').classList.add('active');
+    document.getElementById('playerFrame').src = movie.embed;
+    document.getElementById('playerTitle').textContent = movie.title;
+    document.getElementById('playerYear').textContent = movie.year;
+    document.getElementById('playerRating').textContent = movie.rating;
+    document.getElementById('playerGenre').textContent = movie.genre;
+    document.getElementById('playerDesc').textContent = movie.desc;
+    window.scrollTo(0, 0);
+  }
+
+  function goBack() {
+    document.getElementById('playerFrame').src = '';
+    document.getElementById('playerPage').classList.remove('active');
+    document.getElementById('mainContent').classList.remove('hidden');
+    window.scrollTo(0, 0);
+  }
+</script>
+
+</body>
+</html>
