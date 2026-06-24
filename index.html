@@ -432,16 +432,9 @@
     } catch(e) { return null; }
   }
 
-  async function getMgebIds(type) {
-    const key = 'mgeb_ids_' + type;
-    const cached = cacheGet(key);
-    if (cached) return cached;
-    try {
-      const r = await fetch(`${MGEB_BASE}/api/${type}`);
-      const d = await r.json();
-      cacheSet(key, d);
-      return d;
-    } catch(e) { return []; }
+  // Extrai IDs de um resultado TMDB
+  function extractIds(data) {
+    return (data?.results || []).map(i => i.id);
   }
 
   // ── STATE ──
@@ -698,27 +691,38 @@
   }
 
   // ── INIT ──
+  // Usa TMDB diretamente para descoberta — sem dependência de mgeb.top
   async function init() {
-    const [movieIds, seriesIds] = await Promise.all([
-      getMgebIds('movie'),
-      getMgebIds('series')
+    const [lancamentos, populares, acao, seriesTop, seriesPop] = await Promise.all([
+      tmdb('/movie/now_playing'),
+      tmdb('/movie/popular'),
+      tmdb('/discover/movie', { with_genres: '28', sort_by: 'popularity.desc' }),
+      tmdb('/tv/top_rated'),
+      tmdb('/tv/popular')
     ]);
 
+    const lancamentosIds = extractIds(lancamentos);
+    const popularesIds   = extractIds(populares);
+    const acaoIds        = extractIds(acao);
+    const seriesTopIds   = extractIds(seriesTop);
+    const seriesPopIds   = extractIds(seriesPop);
+
     // Hero com filme popular
-    await setupHero(movieIds.slice(0,15), 'movie');
+    await setupHero(popularesIds.slice(0, 15), 'movie');
 
     // Grids de filmes
     await Promise.all([
-      loadGrid('grid-lancamentos', movieIds.slice(0,12), 'movie', 12),
-      loadGrid('grid-populares',   movieIds.slice(12,24), 'movie', 12),
-      loadGrid('grid-acao',        movieIds.slice(24,36), 'movie', 12),
+      loadGrid('grid-lancamentos', lancamentosIds.slice(0, 12), 'movie', 12),
+      loadGrid('grid-populares',   popularesIds.slice(0, 12),   'movie', 12),
+      loadGrid('grid-acao',        acaoIds.slice(0, 12),        'movie', 12),
     ]);
 
     // Grids de séries
     await Promise.all([
-      loadGrid('grid-series-top', seriesIds.slice(0,12), 'tv', 12),
-      loadGrid('grid-series-pop', seriesIds.slice(12,24), 'tv', 12),
+      loadGrid('grid-series-top', seriesTopIds.slice(0, 12), 'tv', 12),
+      loadGrid('grid-series-pop', seriesPopIds.slice(0, 12), 'tv', 12),
     ]);
+
   }
 
   init();
