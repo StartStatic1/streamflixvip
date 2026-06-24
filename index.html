@@ -568,14 +568,14 @@
     if (type === 'movie') {
       servers = [
         { label: '🎬 MegaEmbed DUB', url: `${MGEB_BASE}/embed/${tmdbId}` },
-        { label: '🌐 Legendado',      url: `https://nhdapi.com/embed/movie/${tmdbId}` },
         { label: '▶ Vidstack DUB',   url: `${MGEB_BASE}/embed/${tmdbId}?player=vidstack` },
+        { label: '🎯 CineRadar',     url: `https://cineradar.fun/assistir/filme-${tmdbId}-online-em-hd` },
       ];
     } else {
       servers = [
         { label: '🎬 MegaEmbed DUB', url: `${MGEB_BASE}/embed/${tmdbId}/1/1` },
-        { label: '🌐 Legendado',      url: `https://nhdapi.com/embed/tv/${tmdbId}/1/1` },
         { label: '▶ Vidstack DUB',   url: `${MGEB_BASE}/embed/${tmdbId}/1/1?player=vidstack` },
+        { label: '🎯 CineRadar',     url: `https://cineradar.fun/assistir/serie-${tmdbId}-online-em-hd` },
       ];
     }
     bar._servers = servers;
