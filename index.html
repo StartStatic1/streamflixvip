@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700;9..144,800&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
       --bg: #0a0a12;
@@ -483,6 +484,13 @@
   const CACHE_TTL  = 7200 * 1000; // 2h
   const CACHE_VERSION = 'v5'; // bump pra invalidar cache antigo de clientes
 
+  // ── PAINEL DE FONTES (Supabase) ──
+  // Mesmo projeto/tabela usados pelo painel de admin. Chave anon (pública, segura pro navegador).
+  const SUPABASE_URL = 'https://gkujbjpvphuvrejpvvtz.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdWpianB2cGh1dnJlanB2dnR6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2OTQ2OTMsImV4cCI6MjA5NDI3MDY5M30.Zoqdn0V6SZOAfhz9kK9NgG6lniJdyVqihLsNT-O8Huw';
+  // Nome 'db' (não 'supabase') para não colidir com o objeto global que a CDN já cria.
+  const db = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
   // ── MONETIZAÇÃO (onClick) ──
   // O script padrão do Monetag se anexa ao documento inteiro e dispara no
   // próximo clique em QUALQUER lugar da página. Pra restringir o disparo
@@ -703,7 +711,7 @@
     });
 
     // build server bar
-    buildServerBar(item, type);
+    await buildServerBar(item, type);
 
     // episodes for series
     const epWrap = document.getElementById('episodesWrap');
@@ -724,22 +732,57 @@
   // e os IDs não correspondem aos do TMDB, abrindo o filme/série errado.
   // Servidor "LEG" (MegaEmbed ?lang=en) também foi removido: o parâmetro não tem efeito
   // real no player, então ficava parecendo quebrado pro usuário.
-  function buildServerBar(item, type) {
+
+  // Busca fontes cadastradas manualmente no painel (vip_sources) para este item.
+  // Para séries, filtra pela temporada/episódio atual; para filmes, season/episode ficam null.
+  async function fetchCustomSources(tmdbId, type, season, episode) {
+    if (!db) return [];
+    try {
+      let query = db
+        .from('vip_sources')
+        .select('source_url, source_label, priority')
+        .eq('tmdb_id', tmdbId)
+        .eq('media_type', type)
+        .eq('is_active', true)
+        .order('priority', { ascending: false });
+
+      if (type === 'tv') {
+        query = query.eq('season', season).eq('episode', episode);
+      } else {
+        query = query.is('season', null);
+      }
+
+      const { data, error } = await query;
+      if (error || !data) return [];
+      return data.map(s => ({ icon: '⭐', name: s.source_label, tag: 'Prioridade', url: s.source_url }));
+    } catch (e) {
+      return [];
+    }
+  }
+
+  async function buildServerBar(item, type) {
     const grid = document.getElementById('serverGrid');
     const tmdbId = item.id;
 
-    let servers = [];
+    const season = type === 'tv' ? currentSeason : null;
+    const episode = type === 'tv' ? currentEp : null;
+    const customServers = await fetchCustomSources(tmdbId, type, season, episode);
+
+    let fallbackServers = [];
     if (type === 'movie') {
-      servers = [
+      fallbackServers = [
         { icon: '🎬', name: 'MegaEmbed', tag: 'DUB · HD', url: `${MGEB_BASE}/embed/${tmdbId}` },
         { icon: '▶️', name: 'Vidstack',  tag: 'DUB · HD', url: `${MGEB_BASE}/embed/${tmdbId}?player=vidstack` },
       ];
     } else {
-      servers = [
+      fallbackServers = [
         { icon: '🎬', name: 'MegaEmbed', tag: 'DUB · HD', url: `${MGEB_BASE}/embed/${tmdbId}/1/1` },
         { icon: '▶️', name: 'Vidstack',  tag: 'DUB · HD', url: `${MGEB_BASE}/embed/${tmdbId}/1/1?player=vidstack` },
       ];
     }
+
+    // Fontes cadastradas no painel aparecem primeiro; mgeb.top fica como alternativa sempre disponível.
+    const servers = [...customServers, ...fallbackServers];
     grid._servers = servers;
 
     grid.innerHTML = servers.map((s,i) => `
@@ -794,8 +837,8 @@
       `;
     }
     renderEps();
-    window.selectSeason = (s) => { currentSeason = s; currentEp = 1; renderEps(); playServer(0); };
-    window.selectEp     = (e) => { currentEp = e; renderEps(); playServer(0); };
+    window.selectSeason = async (s) => { currentSeason = s; currentEp = 1; renderEps(); await buildServerBar(currentItem, 'tv'); playServer(0); };
+    window.selectEp     = async (e) => { currentEp = e; renderEps(); await buildServerBar(currentItem, 'tv'); playServer(0); };
   }
 
   function closeModal(e) {
