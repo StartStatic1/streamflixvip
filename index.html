@@ -212,31 +212,62 @@
     .modal {
       background:var(--bg-elevated); border:1px solid var(--border);
       border-radius:16px; width:100%; max-width:1000px;
-      max-height:92vh; overflow-y:auto;
+      max-height:92vh; overflow-y:auto; overflow-x:hidden;
       box-shadow:0 30px 80px rgba(0,0,0,0.6);
     }
-    .modal-header {
-      display:flex; align-items:center; justify-content:space-between;
-      padding:18px 22px; border-bottom:1px solid var(--border-soft);
+
+    /* banner grande no topo, estilo página de detalhes */
+    .modal-banner {
+      position:relative; width:100%;
+      aspect-ratio:16/8;
+      min-height:200px;
+      background:var(--surface);
+      overflow:hidden;
     }
-    .modal-title { font-family:var(--font-display); font-size:1.2rem; font-weight:600; }
+    .modal-banner-bg {
+      position:absolute; inset:0;
+      background-size:cover; background-position:center top;
+    }
+    .modal-banner-bg::after {
+      content:'';
+      position:absolute; inset:0;
+      background:linear-gradient(to top, var(--bg-elevated) 0%, rgba(15,15,26,0.45) 60%, rgba(15,15,26,0.15) 100%);
+    }
     .modal-close {
-      background:var(--surface); border:1px solid var(--border); color:var(--muted); font-size:1.1rem;
-      cursor:pointer; line-height:1; transition:all .2s; width:34px; height:34px; border-radius:8px;
-      display:flex; align-items:center; justify-content:center;
+      position:absolute; top:14px; right:14px; z-index:5;
+      background:rgba(10,10,18,0.7); border:1px solid rgba(255,255,255,0.15); color:#fff; font-size:1.1rem;
+      cursor:pointer; line-height:1; transition:all .2s; width:36px; height:36px; border-radius:9px;
+      display:flex; align-items:center; justify-content:center; backdrop-filter:blur(6px);
     }
-    .modal-close:hover { color:var(--text); border-color:var(--accent2); }
+    .modal-close:hover { background:rgba(10,10,18,0.9); border-color:var(--accent2); }
+    .modal-banner-content {
+      position:relative; z-index:2; height:100%;
+      display:flex; align-items:flex-end; gap:18px;
+      padding:18px 20px;
+    }
+    .modal-poster {
+      width:84px; min-width:84px; height:126px;
+      object-fit:cover; border-radius:8px; background:var(--card);
+      box-shadow:0 8px 24px rgba(0,0,0,0.5);
+    }
+    .modal-banner-info h2 { font-family:var(--font-display); font-size:1.3rem; font-weight:700; margin-bottom:7px; line-height:1.15; }
+    .modal-meta { display:flex; gap:11px; font-size:0.8rem; color:var(--muted); flex-wrap:wrap; margin-bottom:7px; align-items:center; }
+    .modal-meta .modal-rating { color:var(--gold); font-weight:700; }
+    .modal-cast { font-size:0.78rem; color:var(--muted-dim); }
+    .modal-cast b { color:var(--muted); font-weight:600; }
+
+    .modal-body { padding:18px 20px 22px; }
+    .modal-desc { font-size:0.88rem; color:#bcbace; line-height:1.6; margin-bottom:18px; }
 
     .player-wrap {
       width:100%; aspect-ratio:16/9;
       background:#000; position:relative;
+      border-radius:10px; overflow:hidden; margin-bottom:18px;
     }
     .player-wrap iframe { width:100%; height:100%; border:none; display:block; }
 
     /* server selector */
-    .server-bar {
-      padding:18px 22px; border-bottom:1px solid var(--border-soft);
-    }
+    .server-bar { margin-bottom:6px; }
     .server-label { font-size:0.78rem; color:var(--muted); font-weight:700; letter-spacing:.5px; text-transform:uppercase; margin-bottom:12px; display:block; }
     .server-grid { display:flex; gap:10px; flex-wrap:wrap; }
     .server-btn {
@@ -254,7 +285,7 @@
     .server-tag { font-size:0.66rem; opacity:.8; font-weight:600; letter-spacing:.3px; }
 
     /* episode selector */
-    .episodes-wrap { padding:18px 22px; border-bottom:1px solid var(--border-soft); }
+    .episodes-wrap { padding-top:18px; margin-top:18px; border-top:1px solid var(--border-soft); }
     .episodes-title { font-size:0.78rem; font-weight:700; margin-bottom:12px; color:var(--muted); letter-spacing:.5px; text-transform:uppercase; }
     .season-tabs { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
     .season-tab {
@@ -272,19 +303,6 @@
     .ep-btn:hover { border-color:var(--accent2); color:var(--text); }
     .ep-btn.active { background:var(--accent2); border-color:var(--accent2); color:#fff; }
 
-    .modal-detail {
-      display:flex; gap:22px; padding:22px;
-    }
-    .modal-poster {
-      width:110px; min-width:110px; height:165px;
-      object-fit:cover; border-radius:9px; background:var(--card);
-    }
-    .modal-info h2 { font-family:var(--font-display); font-size:1.3rem; font-weight:700; margin-bottom:8px; }
-    .modal-meta { display:flex; gap:12px; font-size:0.8rem; color:var(--muted); flex-wrap:wrap; margin-bottom:10px; align-items:center; }
-    .modal-meta .modal-rating { color:var(--gold); font-weight:700; }
-    .modal-cast { font-size:0.82rem; color:var(--muted-dim); margin-bottom:10px; }
-    .modal-cast b { color:var(--muted); font-weight:600; }
-    .modal-desc { font-size:0.88rem; color:#bcbace; line-height:1.65; }
 
     /* ── SEARCH RESULTS ── */
     .search-overlay {
@@ -324,10 +342,14 @@
       .hero { height:460px; }
       .hero-content { padding:28px 20px; }
       .hero-cast { display:none; }
-      .grid { grid-template-columns:repeat(auto-fill, minmax(124px, 1fr)); gap:10px; }
+      .grid { grid-template-columns:repeat(2, 1fr); gap:10px; }
       .sections { padding:0 16px 50px; }
-      .modal-detail { flex-direction:column; }
-      .modal-poster { width:84px; height:126px; }
+      .modal-banner { aspect-ratio:16/10; min-height:170px; }
+      .modal-banner-content { padding:14px 16px; gap:12px; }
+      .modal-poster { width:64px; min-width:64px; height:96px; }
+      .modal-banner-info h2 { font-size:1.05rem; }
+      .modal-cast { display:none; }
+      .modal-body { padding:16px 16px 20px; }
       .server-btn { min-width:auto; flex:1 1 calc(50% - 5px); }
       .card-overlay { display:none; }
     }
@@ -359,7 +381,7 @@
     <p class="hero-desc" id="heroDesc"></p>
     <div class="hero-btns">
       <button class="btn-primary" id="heroPlayBtn" onclick="heroPlay()">▶ Assistir agora</button>
-      <button class="btn-secondary" id="heroInfoBtn" onclick="heroPlay()">ℹ Mais informações</button>
+      <button class="btn-secondary" id="heroInfoBtn" onclick="openItem(heroItem, heroItem._type || 'movie')">ℹ Mais informações</button>
     </div>
   </div>
 </div>
@@ -414,26 +436,28 @@
 <!-- MODAL PLAYER -->
 <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
   <div class="modal" id="modalBox">
-    <div class="modal-header">
-      <div class="modal-title" id="modalTitle">-</div>
+    <div class="modal-banner" id="modalBanner">
+      <div class="modal-banner-bg" id="modalBannerBg"></div>
       <button class="modal-close" onclick="closeModalDirect()">✕</button>
-    </div>
-    <div class="player-wrap" id="playerWrap">
-      <iframe id="playerFrame" allowfullscreen allow="autoplay; encrypted-media; picture-in-picture" referrerpolicy="no-referrer"></iframe>
-    </div>
-    <div class="server-bar" id="serverBar">
-      <span class="server-label">Escolha o servidor</span>
-      <div class="server-grid" id="serverGrid"></div>
-    </div>
-    <div class="episodes-wrap" id="episodesWrap" style="display:none"></div>
-    <div class="modal-detail">
-      <img class="modal-poster" id="modalPoster" src="" alt="" />
-      <div class="modal-info">
-        <h2 id="modalDetailTitle"></h2>
-        <div class="modal-meta" id="modalMeta"></div>
-        <div class="modal-cast" id="modalCast"></div>
-        <p class="modal-desc" id="modalDesc"></p>
+      <div class="modal-banner-content">
+        <img class="modal-poster" id="modalPoster" src="" alt="" />
+        <div class="modal-banner-info">
+          <h2 id="modalDetailTitle"></h2>
+          <div class="modal-meta" id="modalMeta"></div>
+          <div class="modal-cast" id="modalCast"></div>
+        </div>
       </div>
+    </div>
+    <div class="modal-body">
+      <p class="modal-desc" id="modalDesc"></p>
+      <div class="player-wrap" id="playerWrap">
+        <iframe id="playerFrame" allowfullscreen allow="autoplay; encrypted-media; picture-in-picture" referrerpolicy="no-referrer"></iframe>
+      </div>
+      <div class="server-bar" id="serverBar">
+        <span class="server-label">Escolha o servidor</span>
+        <div class="server-grid" id="serverGrid"></div>
+      </div>
+      <div class="episodes-wrap" id="episodesWrap" style="display:none"></div>
     </div>
   </div>
 </div>
@@ -458,6 +482,20 @@
   const MGEB_BASE  = 'https://mgeb.top';
   const CACHE_TTL  = 7200 * 1000; // 2h
   const CACHE_VERSION = 'v5'; // bump pra invalidar cache antigo de clientes
+
+  // ── MONETIZAÇÃO (onClick) ──
+  // O script padrão do Monetag se anexa ao documento inteiro e dispara no
+  // próximo clique em QUALQUER lugar da página. Pra restringir o disparo
+  // só às ações de "assistir/play" (e não a qualquer clique no site),
+  // ele é injetado sob demanda apenas dentro dessas ações, nunca no carregamento da página.
+  let adScriptLoaded = false;
+  function triggerPlayAd() {
+    if (adScriptLoaded) return; // só injeta uma vez por sessão de página
+    adScriptLoaded = true;
+    (function(s){s.dataset.zone='11193235',s.src='https://al5sm.com/tag.min.js'})(
+      [document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script'))
+    );
+  }
 
   // ── CACHE ──
   function cacheGet(k) {
@@ -602,6 +640,9 @@
 
   function heroPlay() {
     if (heroItem) openItem(heroItem, heroItem._type || 'movie');
+    triggerPlayAd();
+    // link direto de monetização — abre em nova aba sem travar a navegação principal
+    window.open('https://omg10.com/4/11193234', '_blank');
   }
 
   // ── OPEN ITEM (MODAL) ──
@@ -616,11 +657,16 @@
     currentEp = 1;
     seriesDetails = null;
 
-    document.getElementById('modalTitle').textContent = item.title || item.name;
     document.getElementById('modalDetailTitle').textContent = item.title || item.name;
     document.getElementById('modalPoster').src = item.poster_path
       ? IMG_BASE + 'w200' + item.poster_path : '';
     document.getElementById('modalDesc').textContent = item.overview || '';
+
+    // banner grande: usa backdrop; se não tiver, cai pro poster
+    const bannerImg = item.backdrop_path
+      ? IMG_BASE + 'w1280' + item.backdrop_path
+      : (item.poster_path ? IMG_BASE + 'w780' + item.poster_path : '');
+    document.getElementById('modalBannerBg').style.backgroundImage = bannerImg ? `url(${bannerImg})` : 'none';
 
     const year = (item.release_date || item.first_air_date || '').slice(0,4);
     const rating = item.vote_average ? item.vote_average.toFixed(1) : null;
@@ -634,7 +680,7 @@
 
     document.getElementById('modalCast').innerHTML = '';
 
-    // detalhes completos (credits) — busca pra preencher elenco e gêneros
+    // detalhes completos (credits) — busca pra preencher elenco, gêneros e o banner grande
     const detailPath = (type === 'movie' ? '/movie/' : '/tv/') + item.id;
     tmdb(detailPath, { append_to_response: 'credits' }).then(full => {
       if (!full) return;
@@ -650,6 +696,9 @@
           `<span>🎭 ${g}</span>`,
           type === 'movie' ? '<span>🎬 Filme</span>' : '<span>📺 Série</span>'
         ].filter(Boolean).join('');
+      }
+      if (full.backdrop_path && !item.backdrop_path) {
+        document.getElementById('modalBannerBg').style.backgroundImage = `url(${IMG_BASE}w1280${full.backdrop_path})`;
       }
     });
 
@@ -673,6 +722,8 @@
   // ── SERVIDORES ──
   // CineRadar foi removido: o domínio bloqueia exibição em iframe (força navegação pra fora)
   // e os IDs não correspondem aos do TMDB, abrindo o filme/série errado.
+  // Servidor "LEG" (MegaEmbed ?lang=en) também foi removido: o parâmetro não tem efeito
+  // real no player, então ficava parecendo quebrado pro usuário.
   function buildServerBar(item, type) {
     const grid = document.getElementById('serverGrid');
     const tmdbId = item.id;
@@ -682,13 +733,11 @@
       servers = [
         { icon: '🎬', name: 'MegaEmbed', tag: 'DUB · HD', url: `${MGEB_BASE}/embed/${tmdbId}` },
         { icon: '▶️', name: 'Vidstack',  tag: 'DUB · HD', url: `${MGEB_BASE}/embed/${tmdbId}?player=vidstack` },
-        { icon: '🌐', name: 'MegaEmbed', tag: 'LEG · HD', url: `${MGEB_BASE}/embed/${tmdbId}?lang=en` },
       ];
     } else {
       servers = [
         { icon: '🎬', name: 'MegaEmbed', tag: 'DUB · HD', url: `${MGEB_BASE}/embed/${tmdbId}/1/1` },
         { icon: '▶️', name: 'Vidstack',  tag: 'DUB · HD', url: `${MGEB_BASE}/embed/${tmdbId}/1/1?player=vidstack` },
-        { icon: '🌐', name: 'MegaEmbed', tag: 'LEG · HD', url: `${MGEB_BASE}/embed/${tmdbId}/1/1?lang=en` },
       ];
     }
     grid._servers = servers;
@@ -715,6 +764,7 @@
       url = url.replace(/\/1\/1(\?|$)/, `/${currentSeason}/${currentEp}$1`);
     }
     document.getElementById('playerFrame').src = url;
+    triggerPlayAd();
   }
 
   async function loadSeriesEpisodes(tvId) {
