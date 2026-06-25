@@ -859,7 +859,7 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
           Mais info
         </button>
-        <button class="btn-trailer" id="heroTrailerBtn" onclick="openTrailer()" style="display:none">
+        <button class="btn-trailer" id="heroTrailerBtn" onclick="openTrailer('hero')" style="display:none">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
           Trailer
         </button>
@@ -923,7 +923,7 @@
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" id="detailFavIcon"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
               <span id="detailFavLabel">Salvar na lista</span>
             </button>
-            <button class="btn-trailer" id="detailTrailerBtn" onclick="openTrailer()" style="display:none">
+            <button class="btn-trailer" id="detailTrailerBtn" onclick="openTrailer('detail')" style="display:none">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
               Trailer
             </button>
@@ -1166,7 +1166,9 @@
   function getContinueList() {
     try { return JSON.parse(localStorage.getItem('sfv_continue') || '[]'); } catch(e) { return []; }
   }
-  function saveToContinue(item, type, season, ep) {
+  // progress: número de 0 a 1 com o quanto já foi assistido (real, vindo do <video>),
+  // ou null quando o servidor é um iframe de terceiros e não temos como medir de verdade.
+  function saveToContinue(item, type, season, ep, progress) {
     try {
       let list = getContinueList();
       list = list.filter(i => !(i.id === item.id && i.type === type));
@@ -1175,10 +1177,24 @@
         title: item.title || item.name,
         backdrop: item.backdrop_path,
         poster: item.poster_path,
-        season, ep, progress: Math.random() * 0.6 + 0.1,
+        season, ep,
+        progress: (typeof progress === 'number') ? progress : null,
         ts: Date.now()
       });
       list = list.slice(0, 12);
+      localStorage.setItem('sfv_continue', JSON.stringify(list));
+    } catch(e) {}
+  }
+  // Atualiza só o progresso de uma entrada já existente (chamado a cada timeupdate do <video>),
+  // sem mover o item pro topo da lista a cada tick (isso ficaria re-renderizando a Home toda hora).
+  function updateContinueProgress(id, type, season, ep, progress) {
+    try {
+      let list = getContinueList();
+      const idx = list.findIndex(i => i.id === id && i.type === type);
+      if (idx === -1) return;
+      list[idx].progress = progress;
+      list[idx].season = season;
+      list[idx].ep = ep;
       localStorage.setItem('sfv_continue', JSON.stringify(list));
     } catch(e) {}
   }
@@ -1209,13 +1225,14 @@
   let heroItem = null;
   let currentItem = null;
   let currentItemType = null; // 'movie' | 'tv' | 'anime' (UI type)
-  let currentTrailerKey = null;
+  let heroTrailerKey = null;
+  let detailTrailerKey = null;
   let currentSeason = 1;
   let currentEp = 1;
   let seriesDetails = null;
   let seasonEpisodesCache = {};
   const itemStore = {};
-  let allGridState = { type:'movie', page:1, loading:false, done:false };
+  let allGridState = { type:null, page:1, loading:false, done:false };
 
   // ══════════════════════════════════════
   // ROUTER
@@ -1430,9 +1447,9 @@
     ).join('');
 
     const trailerVideo = (item.videos?.results || []).find(v => v.type === 'Trailer' && v.site === 'YouTube');
-    currentTrailerKey = trailerVideo?.key || null;
+    heroTrailerKey = trailerVideo?.key || null;
     const trailerBtn = document.getElementById('heroTrailerBtn');
-    if (trailerBtn) trailerBtn.style.display = currentTrailerKey ? 'inline-flex' : 'none';
+    if (trailerBtn) trailerBtn.style.display = heroTrailerKey ? 'inline-flex' : 'none';
   }
 
   function heroPlay() {
@@ -1449,10 +1466,11 @@
   // ══════════════════════════════════════
   // TRAILER MODAL
   // ══════════════════════════════════════
-  function openTrailer() {
-    if (!currentTrailerKey) return;
+  function openTrailer(source) {
+    const key = source === 'detail' ? detailTrailerKey : heroTrailerKey;
+    if (!key) return;
     const modal = document.getElementById('trailerModal');
-    document.getElementById('trailerFrame').src = `https://www.youtube.com/embed/${currentTrailerKey}?autoplay=1`;
+    document.getElementById('trailerFrame').src = `https://www.youtube.com/embed/${key}?autoplay=1`;
     modal.classList.add('open');
   }
   function closeTrailerById() {
@@ -1478,7 +1496,8 @@
         ? `<img class="continue-thumb" src="${IMG_BASE}w780${i.backdrop}" loading="lazy" width="240" height="135" />`
         : `<div class="continue-thumb" style="background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:2rem">🎬</div>`;
       const sub = i.type === 'movie' ? 'Filme' : `T${i.season} · Ep ${i.ep}`;
-      const pct = Math.round((i.progress||0.3)*100);
+      const hasRealProgress = typeof i.progress === 'number';
+      const pct = hasRealProgress ? Math.round(i.progress*100) : null;
       itemStore[i.type+':'+i.id] = { id:i.id, title:i.title, name:i.title, poster_path:i.poster, vote_average:i.rating };
       return `
         <div class="continue-card" onclick="navigate('title',{id:${i.id},type:'${i.type}'})">
@@ -1486,11 +1505,11 @@
           <div class="continue-play-overlay">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
           </div>
-          <div class="continue-progress-bar"><div class="continue-progress-fill" style="width:${pct}%"></div></div>
+          ${hasRealProgress ? `<div class="continue-progress-bar"><div class="continue-progress-fill" style="width:${pct}%"></div></div>` : ''}
           <button class="continue-remove-btn" onclick="event.stopPropagation();removeContinueItem(${i.id},'${i.type}')">×</button>
           <div class="continue-info">
             <div class="continue-title">${i.title}</div>
-            <div class="continue-sub">${sub} · ${pct}% assistido</div>
+            <div class="continue-sub">${sub}${hasRealProgress ? ` · ${pct}% assistido` : ' · Continuar'}</div>
           </div>
         </div>
       `;
@@ -1723,7 +1742,7 @@
     currentEp = 1;
     seriesDetails = null;
     seasonEpisodesCache = {};
-    currentTrailerKey = null;
+    detailTrailerKey = null;
 
     document.getElementById('detailTitle').textContent = 'Carregando...';
     ['detailDesc','detailRating','detailMeta','detailChips','detailCast'].forEach(el => {
@@ -1752,7 +1771,8 @@
     currentItemType = type;
     itemStore[type+':'+id] = currentItem;
 
-    saveToContinue(full, type, currentSeason, currentEp);
+    // saveToContinue agora só roda quando o player de fato começa a tocar
+    // (em playServer / startProgressTracking), não só por abrir a página.
 
     document.getElementById('detailTitle').textContent = full.title || full.name;
     const poster = full.poster_path ? IMG_BASE + 'w300' + full.poster_path : '';
@@ -1799,8 +1819,8 @@
     document.getElementById('detailFavIcon').setAttribute('fill', saved ? 'currentColor' : 'none');
 
     const trailerVideo = (full.videos?.results || []).find(v => v.type === 'Trailer' && v.site === 'YouTube');
-    currentTrailerKey = trailerVideo?.key || null;
-    if (currentTrailerKey) {
+    detailTrailerKey = trailerVideo?.key || null;
+    if (detailTrailerKey) {
       document.getElementById('detailTrailerBtn').style.display = 'inline-flex';
     }
 
@@ -1871,11 +1891,26 @@
   function stopVideoPlayer() {
     const video = document.getElementById('playerVideo');
     if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
+    video.removeEventListener('timeupdate', onVideoTimeUpdate);
     video.pause();
     video.removeAttribute('src');
     video.load();
     video.style.display = 'none';
   }
+
+  // Atualiza o progresso real no localStorage conforme o <video> nativo toca.
+  // Throttle de ~5s pra não escrever no localStorage a cada frame.
+  let lastProgressWrite = 0;
+  function onVideoTimeUpdate() {
+    const video = document.getElementById('playerVideo');
+    if (!currentItem || !video.duration || isNaN(video.duration)) return;
+    const now = Date.now();
+    if (now - lastProgressWrite < 5000) return;
+    lastProgressWrite = now;
+    const progress = Math.min(0.99, video.currentTime / video.duration);
+    updateContinueProgress(currentItem.id, currentItemType, currentSeason, currentEp, progress);
+  }
+
   function playServer(idx) {
     const grid = document.getElementById('serverGrid');
     const servers = grid._servers;
@@ -1888,6 +1923,7 @@
     const video  = document.getElementById('playerVideo');
 
     if (isDirectVideoUrl(url)) {
+      // <video> nativo: conseguimos medir o progresso real (currentTime/duration)
       iframe.src = ''; iframe.style.display = 'none';
       video.style.display = 'block';
       const playable = resolvePlayableUrl(url);
@@ -1902,12 +1938,18 @@
         if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
         video.src = playable;
       }
+      video.removeEventListener('timeupdate', onVideoTimeUpdate);
+      video.addEventListener('timeupdate', onVideoTimeUpdate);
       video.play().catch(() => {});
+      saveToContinue(currentItem, currentItemType, currentSeason, currentEp, 0.01);
     } else {
+      // iframe de terceiros (MegaEmbed/Vidstack/EasyVidPlay): não temos acesso ao tempo
+      // de reprodução real, então salvamos "começou a assistir" sem percentual inventado.
       stopVideoPlayer();
       video.style.display = 'none';
       iframe.style.display = 'block';
       iframe.src = url;
+      saveToContinue(currentItem, currentItemType, currentSeason, currentEp, null);
     }
     triggerPlayAd();
   }
