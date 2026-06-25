@@ -2247,9 +2247,67 @@
   });
 
   init();
-</script>
-<script>
-  if ('serviceWorker' in navigator) {
+
+  // ══════════════════════════════════════
+  // PAUSE ON BACKGROUND
+  // ══════════════════════════════════════
+  (function initBackgroundPause() {
+    let iframeSrcBackup = '';
+    let iframeWasPaused = false;
+
+    function onHide() {
+      const video  = document.getElementById('playerVideo');
+      const iframe = document.getElementById('playerFrame');
+
+      // Pausa o <video> nativo
+      if (video && !video.paused && video.src) {
+        video.pause();
+      }
+
+      // Tenta pausar iframe via postMessage
+      if (iframe && iframe.src) {
+        iframeWasPaused = true;
+        try {
+          if (iframe.contentWindow) {
+            iframe.contentWindow.postMessage({ action: 'pause' }, '*');
+            iframe.contentWindow.postMessage('pause', '*');
+          }
+        } catch (e) {}
+        // Fallback: zera src para realmente parar o stream
+        iframeSrcBackup = iframe.src;
+        iframe.src = '';
+      } else {
+        iframeWasPaused = false;
+      }
+    }
+
+    function onShow() {
+      const video  = document.getElementById('playerVideo');
+      const iframe = document.getElementById('playerFrame');
+
+      // Retoma <video> nativo
+      if (video && video.paused && video.src) {
+        video.play().catch(() => {});
+      }
+
+      // Restaura iframe
+      if (iframeWasPaused && iframeSrcBackup) {
+        iframe.src = iframeSrcBackup;
+        iframeSrcBackup = '';
+        iframeWasPaused = false;
+      }
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) onHide(); else onShow();
+    });
+
+    // Fallback WebView Android/iOS
+    window.addEventListener('pagehide', onHide);
+    window.addEventListener('pageshow', onShow);
+  })();
+
+
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('/sw.js')
         .then(reg => console.log('SW registrado:', reg.scope))
