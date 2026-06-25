@@ -6,6 +6,13 @@
   <title>StreamFlixVIP – Filmes e Séries Online Grátis</title>
   <meta name="description" content="Assista filmes e séries online dublado e legendado grátis no StreamFlixVIP." />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' stop-color='%236d28d9'/><stop offset='100%25' stop-color='%23f0a830'/></linearGradient></defs><rect width='100' height='100' rx='22' fill='url(%23g)'/><text x='50' y='68' text-anchor='middle' font-size='52' font-family='serif' font-weight='bold' fill='white'>S</text></svg>" />
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#6d28d9" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="StreamFlixVIP" />
+  <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700;9..144,800&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
@@ -683,6 +690,21 @@
     .footer-logo { font-family:var(--font-display); font-size:1.3rem; font-weight:700; display:flex; align-items:center; gap:8px; color:var(--text); }
     .footer-logo em { font-style:italic; color:var(--gold); }
     .footer-tagline { font-size:0.82rem; color:var(--muted); max-width:320px; line-height:1.5; }
+    .footer-apk-btn {
+      display:inline-flex; align-items:center; gap:8px;
+      background:linear-gradient(135deg, #16a34a, #15803d);
+      color:#fff; font-size:0.8rem; font-weight:700;
+      padding:9px 15px; border-radius:10px; border:none;
+      text-decoration:none; cursor:pointer;
+      box-shadow:0 4px 14px rgba(22,163,74,0.35);
+      transition:all .2s; white-space:nowrap;
+    }
+    .footer-apk-btn:hover {
+      transform:translateY(-2px);
+      box-shadow:0 6px 20px rgba(22,163,74,0.5);
+      color:#fff;
+    }
+    .footer-apk-btn svg { flex-shrink:0; }
     .footer-telegram {
       display:inline-flex; align-items:center; gap:8px;
       background:rgba(39,173,226,0.12); color:#29ade2;
@@ -983,6 +1005,14 @@
         <a href="https://t.me/streamflixofc" target="_blank" class="footer-telegram">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248l-1.97 9.289c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.48 14.31l-2.95-.924c-.64-.203-.652-.64.135-.95l11.549-4.453c.533-.194 1.001.13.348.265z"/></svg>
           Canal Telegram
+        </a>
+        <a href="https://SEU_LINK_APK_AQUI.apk" class="footer-apk-btn" id="apkDownloadBtn" download>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Baixar App
         </a>
       </div>
     </div>
@@ -2217,6 +2247,15 @@
   });
 
   init();
+</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then(reg => console.log('SW registrado:', reg.scope))
+        .catch(err => console.warn('SW erro:', err));
+    });
+  }
 </script>
 </body>
 </html>
