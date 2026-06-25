@@ -1,100 +1,75 @@
-/**
- * stream-proxy.js — Vercel Serverless Function
- * 
- * Faz proxy de streams http:// para evitar mixed content em sites https://.
- * Suporta MP4, M3U8, TS e outros formatos de vídeo direto.
- * 
- * Uso: /api/stream-proxy?url=http://servidor:porta/video.mp4
- */
+// /api/stream-proxy.js
+//
+// Resolve o bloqueio de "mixed content": navegadores recusam carregar
+// conteúdo http:// dentro de uma página https://. Provedores Xtream
+// costumam servir mp4/m3u8 só em http://, então este endpoint busca o
+// vídeo no servidor de origem e devolve pelo seu domínio https.
+//
+// Uso no frontend:
+//   <video src="https://seu-site.vercel.app/api/stream-proxy?url=ENCODED_URL"></video>
+//
+// IMPORTANTE: troque ALLOWED_HOSTS pelos domínios reais dos seus provedores
+// Xtream antes de publicar. Sem essa lista, qualquer pessoa poderia usar
+// seu proxy pra buscar qualquer URL (abuso de banda/anonimização de tráfego).
 
-module.exports = async function handler(req, res) {
-  // CORS — só permite requisições do próprio site
-  const origin = req.headers.origin || '';
-  const allowedOrigins = [
-    'https://streamflixvip.vercel.app',
-    'https://reamflixvip.vercel.app',
-    'http://localhost:3000',
-    'http://localhost:5500',
-  ];
-  // Aceita qualquer subdomínio .vercel.app do projeto
-  if (allowedOrigins.includes(origin) || /\.vercel\.app$/.test(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  }
-  res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Range, Content-Type');
-  res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Range, Accept-Ranges');
+const ALLOWED_HOSTS = [
+  'unitvlite.xyz',
+  // adicione aqui os domínios dos seus outros provedores Xtream
+];
 
-  if (req.method === 'OPTIONS') {
-    res.status(204).end();
-    return;
-  }
-
+export default async function handler(req, res) {
   const { url } = req.query;
+
   if (!url) {
-    res.status(400).json({ error: 'Parâmetro ?url= obrigatório' });
+    res.status(400).json({ error: 'Parâmetro "url" obrigatório.' });
     return;
   }
 
-  // Validação: só faz proxy de URLs de vídeo válidas
   let target;
   try {
     target = new URL(url);
-  } catch {
-    res.status(400).json({ error: 'URL inválida' });
+  } catch (e) {
+    res.status(400).json({ error: 'URL inválida.' });
     return;
   }
 
-  // Bloqueia acesso a IPs internos/privados
-  const hostname = target.hostname;
-  const isPrivate = /^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(hostname);
-  if (isPrivate) {
-    res.status(403).json({ error: 'Acesso a redes privadas não permitido' });
-    return;
-  }
-
-  // Só deixa passar extensões de vídeo ou sem extensão (streams dinâmicos)
-  const path = target.pathname.toLowerCase();
-  const isVideoPath = /\.(mp4|m3u8|m3u|ts|mkv|webm|avi|mov)(\?|$)/.test(path) || !path.includes('.');
-  if (!isVideoPath) {
-    res.status(403).json({ error: 'Tipo de arquivo não permitido' });
+  if (!ALLOWED_HOSTS.includes(target.hostname)) {
+    res.status(403).json({ error: 'Domínio não autorizado neste proxy.' });
     return;
   }
 
   try {
-    const headers = {
-      'User-Agent': 'Mozilla/5.0 (compatible; StreamProxy/1.0)',
-      'Referer': target.origin,
-    };
+    // repassa o header Range, essencial para permitir avançar/retroceder no player
+    const forwardHeaders = {};
+    if (req.headers.range) forwardHeaders.range = req.headers.range;
 
-    // Repassa Range header para suporte a seek em vídeos
-    if (req.headers.range) {
-      headers['Range'] = req.headers.range;
+    const upstream = await fetch(target.toString(), { headers: forwardHeaders });
+
+    if (!upstream.ok && upstream.status !== 206) {
+      res.status(upstream.status).json({ error: 'Servidor de origem retornou erro: ' + upstream.status });
+      return;
     }
 
-    const upstream = await fetch(target.toString(), {
-      method: req.method,
-      headers,
-      redirect: 'follow',
-    });
-
-    // Copia headers relevantes da resposta upstream
-    const copyHeaders = [
-      'content-type', 'content-length', 'content-range',
-      'accept-ranges', 'cache-control', 'last-modified',
-    ];
-    copyHeaders.forEach(h => {
+    // repassa os headers relevantes pro player entender duração/tipo/range
+    res.status(upstream.status);
+    const passHeaders = ['content-type', 'content-length', 'content-range', 'accept-ranges'];
+    passHeaders.forEach(h => {
       const v = upstream.headers.get(h);
       if (v) res.setHeader(h, v);
     });
+    res.setHeader('Accept-Ranges', 'bytes');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.setHeader('Access-Control-Allow-Origin', '*');
 
-    res.status(upstream.status);
-
-    // Stream da resposta diretamente ao cliente
-    const buffer = await upstream.arrayBuffer();
-    res.end(Buffer.from(buffer));
-
-  } catch (err) {
-    console.error('[stream-proxy] Erro:', err.message);
-    res.status(502).json({ error: 'Erro ao buscar o stream: ' + err.message });
+    const buffer = Buffer.from(await upstream.arrayBuffer());
+    res.send(buffer);
+  } catch (e) {
+    res.status(502).json({ error: 'Falha ao buscar o vídeo de origem: ' + e.message });
   }
+}
+
+export const config = {
+  api: {
+    responseLimit: false, // vídeos costumam passar do limite padrão de resposta da Vercel
+  },
 };
