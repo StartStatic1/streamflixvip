@@ -280,14 +280,7 @@
       display:none; flex-direction:column; padding:80px 40px 40px; overflow-y:auto;
     }
     .search-overlay.open { display:flex; }
-    .search-results-title { font-family:var(--font-display); font-size:1.1rem; font-weight:600; margin-bottom:16px; }
-    .search-filter-btn {
-      background:var(--surface); border:1px solid var(--border); color:var(--muted);
-      font-size:0.78rem; font-weight:700; padding:6px 16px; border-radius:20px; cursor:pointer;
-      transition:all .2s; letter-spacing:.3px;
-    }
-    .search-filter-btn.active { background:var(--accent); border-color:var(--accent); color:#fff; }
-    .search-filter-btn:hover:not(.active) { border-color:var(--accent2); color:var(--text); }
+    .search-results-title { font-family:var(--font-display); font-size:1.1rem; font-weight:600; margin-bottom:20px; }
 
     .toast {
       position:fixed; bottom:26px; left:50%; transform:translateX(-50%);
@@ -398,12 +391,8 @@
       <p class="detail-desc" id="detailDesc"></p>
 
       <div class="player-wrap" id="playerWrap">
-        <iframe id="playerFrame" allowfullscreen allow="autoplay; encrypted-media; picture-in-picture" referrerpolicy="no-referrer" style="display:none"></iframe>
-        <video id="playerVideo" controls playsinline style="display:none;width:100%;height:100%;background:#000;border-radius:11px;"></video>
-        <div id="playerMsg" style="display:none;position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;color:#8888a8;font-size:0.88rem;text-align:center;padding:20px;background:#000;border-radius:11px;">
-          <span style="font-size:2rem">🔒</span>
-          <span id="playerMsgText">Link http:// bloqueado pelo navegador.<br>Use um servidor alternativo ou contate o admin.</span>
-        </div>
+        <iframe id="playerFrame" allowfullscreen allow="autoplay; encrypted-media; picture-in-picture" referrerpolicy="no-referrer"></iframe>
+        <video id="playerVideo" controls playsinline style="display:none; width:100%; height:100%; background:#000"></video>
       </div>
 
       <span class="server-label">Escolha o servidor</span>
@@ -418,15 +407,8 @@
 
 <!-- SEARCH OVERLAY -->
 <div class="search-overlay" id="searchOverlay">
-  <div style="max-width:1200px;margin:0 auto;width:100%">
-    <div class="search-results-title" id="searchResultsTitle">Resultados</div>
-    <div id="searchFilterRow" style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
-      <span class="search-filter-btn active" onclick="filterSearch('all',this)">Todos</span>
-      <span class="search-filter-btn" onclick="filterSearch('movie',this)">Filmes</span>
-      <span class="search-filter-btn" onclick="filterSearch('tv',this)">Séries</span>
-    </div>
-    <div class="grid" id="grid-search" style="padding:0"></div>
-  </div>
+  <div class="search-results-title" id="searchResultsTitle">Resultados</div>
+  <div class="grid" id="grid-search" style="padding:0"></div>
 </div>
 
 <footer>
@@ -786,6 +768,7 @@
     document.getElementById('serverGrid').innerHTML = skeletonCards(2).replace(/aspect-ratio:2\/3/g, 'height:54px');
     document.getElementById('episodesBox').style.display = 'none';
     document.getElementById('playerFrame').src = '';
+    stopVideoPlayer();
     document.getElementById('similarSection').innerHTML = '';
 
     const detailPath = (type === 'movie' ? '/movie/' : '/tv/') + id;
@@ -880,17 +863,42 @@
     `).join('');
   }
 
-  // ── PROXY URL (converte http:// → proxy https para evitar mixed content) ──
-  const PROXY_BASE = '/api/stream-proxy'; // Vercel serverless function
-  function isDirectVideo(url) {
-    return /\.(mp4|m3u8|ts|mkv|webm)(\?|$)/i.test(url);
+  // ── PROXY DE STREAM (resolve http dentro de https) ──
+  // Troque pela URL do seu proxy publicado (Vercel e/ou Zeabur).
+  // Deixe vazio ('') se ainda não publicou o proxy — nesse caso, links http://
+  // vão continuar bloqueados pelo navegador até o proxy estar configurado.
+  const STREAM_PROXY_VERCEL = ''; // ex: 'https://streamflixvip.vercel.app/api/stream-proxy?url='
+  const STREAM_PROXY_ZEABUR = ''; // ex: 'https://seu-app.zeabur.app/stream-proxy?url='
+
+  let hlsInstance = null;
+
+  // Detecta se a URL é um arquivo de vídeo direto (precisa de <video>, não <iframe>)
+  function isDirectVideoUrl(url) {
+    return /\.(mp4|m3u8|mkv|webm)(\?|#|$)/i.test(url);
   }
-  function proxyUrl(url) {
-    // Só faz proxy se for http:// (mixed content). https:// vai direto.
-    if (url.startsWith('http://')) {
-      return `${PROXY_BASE}?url=${encodeURIComponent(url)}`;
+  function isM3u8(url) { return /\.m3u8(\?|#|$)/i.test(url); }
+
+  // Para http:// dentro de https://, passa pelo proxy; senão, usa direto.
+  function resolvePlayableUrl(url) {
+    const isHttp = url.startsWith('http://');
+    const pageIsHttps = window.location.protocol === 'https:';
+    if (isHttp && pageIsHttps) {
+      const proxyBase = STREAM_PROXY_VERCEL || STREAM_PROXY_ZEABUR;
+      if (proxyBase) return proxyBase + encodeURIComponent(url);
+      // sem proxy configurado: devolve a URL original (vai ser bloqueada pelo navegador,
+      // mas ao menos não quebra silenciosamente sem pista do motivo)
+      return url;
     }
     return url;
+  }
+
+  function stopVideoPlayer() {
+    const video = document.getElementById('playerVideo');
+    if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
+    video.pause();
+    video.removeAttribute('src');
+    video.load();
+    video.style.display = 'none';
   }
 
   function playServer(idx) {
@@ -899,47 +907,44 @@
     if (!servers || !servers[idx]) return;
     grid.querySelectorAll('.server-btn').forEach((b,i) => b.classList.toggle('active', i===idx));
     let url = servers[idx].url;
-    if (currentItem && currentItem._type === 'tv') url = url.replace(/\/1\/1(\?|$)/, `/${currentSeason}/${currentEp}$1`);
+    if (currentItem._type === 'tv') url = url.replace(/\/1\/1(\?|$)/, `/${currentSeason}/${currentEp}$1`);
 
-    const frame = document.getElementById('playerFrame');
-    const vid   = document.getElementById('playerVideo');
-    const msg   = document.getElementById('playerMsg');
+    const iframe = document.getElementById('playerFrame');
+    const video = document.getElementById('playerVideo');
 
-    // Esconde tudo primeiro
-    frame.style.display = 'none'; frame.src = '';
-    vid.style.display   = 'none'; vid.src = '';
-    msg.style.display   = 'none';
+    if (isDirectVideoUrl(url)) {
+      // arquivo direto (mp4/m3u8/etc): usa <video>, não <iframe>
+      iframe.src = '';
+      iframe.style.display = 'none';
+      video.style.display = 'block';
+      const playable = resolvePlayableUrl(url);
 
-    if (isDirectVideo(url)) {
-      // É arquivo direto: usa <video> com proxy se necessário
-      const safeUrl = proxyUrl(url);
-      if (url.endsWith('.m3u8') || url.includes('.m3u8?')) {
-        // HLS: tenta hls.js se disponível, senão usa nativo (Safari)
-        if (window.Hls && Hls.isSupported()) {
-          const hls = new Hls();
-          hls.loadSource(safeUrl);
-          hls.attachMedia(vid);
-        } else if (vid.canPlayType('application/vnd.apple.mpegurl')) {
-          vid.src = safeUrl; // Safari suporte nativo HLS
+      if (isM3u8(playable)) {
+        if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
+        if (window.Hls && window.Hls.isSupported()) {
+          hlsInstance = new window.Hls();
+          hlsInstance.loadSource(playable);
+          hlsInstance.attachMedia(video);
         } else {
-          // Sem suporte a HLS
-          document.getElementById('playerMsgText').innerHTML = 'Formato M3U8 não suportado neste navegador.<br>Tente outro servidor.';
-          msg.style.display = 'flex';
-          return;
+          // Safari/iOS tocam m3u8 nativamente, sem precisar do hls.js
+          video.src = playable;
         }
       } else {
-        vid.src = safeUrl;
+        if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
+        video.src = playable;
       }
-      vid.style.display = 'block';
-      vid.play().catch(() => {}); // play silencioso (usuário pode ter clicado)
+      video.play().catch(() => {}); // autoplay pode ser bloqueado pelo navegador; o usuário pode dar play manual
     } else {
-      // É link de embed/iframe (MegaEmbed, EasyVidPlay, etc.)
-      frame.src = url;
-      frame.style.display = 'block';
+      // servidor de embed (MegaEmbed, EasyVidPlay, Vidstack etc): mantém <iframe>
+      stopVideoPlayer();
+      video.style.display = 'none';
+      iframe.style.display = 'block';
+      iframe.src = url;
     }
 
     triggerPlayAd();
   }
+
 
   // ── EPISÓDIOS (caixa com scroll PRÓPRIO — corrige o bug de "rolar arrasta a página") ──
   async function loadSeriesEpisodes(tvId) {
@@ -985,28 +990,16 @@
     overlay.classList.add('open');
     searchTimer = setTimeout(() => doSearch(q), 400);
   }
-  let _searchResults = [];
   async function doSearch(q) {
     document.getElementById('searchResultsTitle').textContent = `Resultados para "${q}"`;
     const g = document.getElementById('grid-search');
     g.innerHTML = skeletonCards(8);
     const [movies, tv] = await Promise.all([tmdb('/search/movie', {query:q}), tmdb('/search/tv', {query:q})]);
-    _searchResults = [
+    const allItems = [
       ...(movies?.results||[]).map(i=>({...i,_type:'movie'})),
       ...(tv?.results||[]).map(i=>({...i,_type:'tv'}))
-    ].slice(0,24);
-    renderSearchResults('all');
-  }
-  function renderSearchResults(filter) {
-    const g = document.getElementById('grid-search');
-    const items = filter === 'all' ? _searchResults
-      : _searchResults.filter(i => i._type === filter);
-    g.innerHTML = items.map(i => cardHTML(i, i._type)).join('') || '<div class="empty-state">Nenhum resultado.</div>';
-  }
-  function filterSearch(type, btn) {
-    document.querySelectorAll('.search-filter-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    renderSearchResults(type);
+    ].slice(0,20);
+    g.innerHTML = allItems.map(i => cardHTML(i, i._type)).join('') || '<div class="empty-state">Nenhum resultado.</div>';
   }
   document.addEventListener('click', e => {
     const overlay = document.getElementById('searchOverlay');
