@@ -2375,8 +2375,6 @@
   // PAUSE ON BACKGROUND
   // ══════════════════════════════════════
   (function initBackgroundPause() {
-    let iframeSrcBackup = '';
-    let iframeWasPaused = false;
 
     function onHide() {
       const video  = document.getElementById('playerVideo');
@@ -2387,38 +2385,33 @@
         video.pause();
       }
 
-      // Tenta pausar iframe via postMessage
+      // Tenta pausar iframe via postMessage (sem tocar no src).
+      // Zerar/restaurar o src aqui forçava o iframe a recarregar do zero
+      // sempre que a aba perdia e recuperava o foco — inclusive quando o
+      // próprio iframe abre um popup de ad (a aba some por um instante).
+      // Como o player de terceiros dispara ads ao carregar, cada
+      // recarregamento gerava um novo popup, que gerava nova perda de
+      // foco, num loop. Por isso o src não é mais tocado aqui.
       if (iframe && iframe.src) {
-        iframeWasPaused = true;
         try {
           if (iframe.contentWindow) {
             iframe.contentWindow.postMessage({ action: 'pause' }, '*');
             iframe.contentWindow.postMessage('pause', '*');
           }
         } catch (e) {}
-        // Fallback: zera src para realmente parar o stream
-        iframeSrcBackup = iframe.src;
-        iframe.src = '';
-      } else {
-        iframeWasPaused = false;
       }
     }
 
     function onShow() {
       const video  = document.getElementById('playerVideo');
-      const iframe = document.getElementById('playerFrame');
 
       // Retoma <video> nativo
       if (video && video.paused && video.src) {
         video.play().catch(() => {});
       }
 
-      // Restaura iframe
-      if (iframeWasPaused && iframeSrcBackup) {
-        iframe.src = iframeSrcBackup;
-        iframeSrcBackup = '';
-        iframeWasPaused = false;
-      }
+      // Iframe de terceiros: nada a fazer aqui — o src nunca foi alterado
+      // em onHide(), então não há nada para restaurar.
     }
 
     document.addEventListener('visibilitychange', () => {
