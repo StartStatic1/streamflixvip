@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "app.vercel.streamflixvip.twa",
+        "sha256_cert_fingerprints": ["B2:6F:D0:38:61:C8:B4:97:4C:32:2A:4F:4C:95:09:92:E1:19:A5:48:3A:3F:2E:96:37:34:56:07:CE:BB:88:4F"]
+      }
+    }]
