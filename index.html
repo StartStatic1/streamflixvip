@@ -1166,7 +1166,7 @@
     // rápida (cada clique interno do embed gera um blur na window) e abrir
     // popups em cascata em vez de um por play.
     const now = Date.now();
-    if (now - _lastAdTriggerAt < AD_TRIGGER_COOLDOWN_MS) return;
+    if (now - _lastAdTriggerAt < AD_TRIGGER_COOLDOWN_MS) return false;
     _lastAdTriggerAt = now;
 
     // MoneyTag: carrega o script apenas uma vez por sessão
@@ -1177,25 +1177,28 @@
       );
     }
 
-    // Popunder com delay de 20s — dispara a cada clique no Play
-    if (adDelayTimer) clearTimeout(adDelayTimer);
-    adDelayTimer = setTimeout(function() {
-      try {
-        var w = window.open('https://omg10.com/4/11193234', '_blank');
-        // Fallback: se popup blocker bloquear, usa link invisível
-        if (!w || w.closed || typeof w.closed === 'undefined') {
-          var a = document.createElement('a');
-          a.href = 'https://omg10.com/4/11193234';
-          a.target = '_blank';
-          a.rel = 'noopener';
-          a.style.display = 'none';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-        }
-      } catch(e) {}
-      adDelayTimer = null;
-    }, 20000);
+    // CORRIGIDO: o popup só abre via openAdPopup(), chamado apenas em cliques
+    // reais do usuário. O timer automático de 20s foi removido porque abria
+    // o ad sozinho enquanto o usuário assistia sem interagir com nada.
+    return true;
+  }
+
+  // Abre o popup de ad — só deve ser chamado em ação explícita do usuário
+  function openAdPopup() {
+    try {
+      var w = window.open('https://omg10.com/4/11193234', '_blank');
+      // Fallback: se popup blocker bloquear, usa link invisível
+      if (!w || w.closed || typeof w.closed === 'undefined') {
+        var a = document.createElement('a');
+        a.href = 'https://omg10.com/4/11193234';
+        a.target = '_blank';
+        a.rel = 'noopener';
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+    } catch(e) {}
   }
 
   // ══════════════════════════════════════
@@ -1540,7 +1543,7 @@
   function heroPlay() {
     if (heroItem) {
       triggerPlayAd();
-      window.open('https://omg10.com/4/11193234', '_blank');
+      openAdPopup(); // usuário clicou explicitamente em "Assistir agora"
       navigate('title', {id:heroItem.id, type:heroItem._type});
     }
   }
@@ -2068,7 +2071,10 @@
       window.removeEventListener('blur', _onIframeFocus);
       window.addEventListener('blur', _onIframeFocus);
     }
-    triggerPlayAd();
+    // CORRIGIDO: triggerPlayAd() removido daqui. Ele agendava um popup
+    // automático de 20s toda vez que o player carregava, abrindo o ad
+    // sozinho enquanto o usuário assistia sem ter interagido com nada.
+    // O ad agora só dispara via clique explícito do usuário.
   }
 
   // ── Handlers de monetização (fora do playServer pra poder remover) ──
@@ -2077,22 +2083,34 @@
     const video = document.getElementById('playerVideo');
     if (video && video.readyState > 0) {
       _adVideoPausedByUser = true;
-      triggerPlayAd();
+      if (triggerPlayAd()) openAdPopup(); // clique de pause = interação real
     }
   }
   function _onVideoPlay() {
     if (_adVideoPausedByUser) {
       _adVideoPausedByUser = false;
-      triggerPlayAd();
+      if (triggerPlayAd()) openAdPopup(); // retomou após pause = interação real
     }
   }
   function _onFullscreen() {
-    triggerPlayAd();
+    if (triggerPlayAd()) openAdPopup(); // entrou em fullscreen = interação real
   }
   function _onIframeFocus() {
     const iframe = document.getElementById('playerFrame');
     if (iframe && iframe.src && iframe.style.display !== 'none') {
-      triggerPlayAd();
+      // CORRIGIDO: só abre popup se passou tempo suficiente desde o último.
+      // Isso evita que ao voltar do popup de ad (que causa um novo blur/focus)
+      // o sistema dispare outro ad em cascata, prendendo o usuário num loop.
+      if (triggerPlayAd()) openAdPopup();
+      // Remove o listener depois de disparar e recoloca após 60s,
+      // para não reativar imediatamente ao retornar da aba do ad.
+      window.removeEventListener('blur', _onIframeFocus);
+      setTimeout(() => {
+        const fr = document.getElementById('playerFrame');
+        if (fr && fr.src && fr.style.display !== 'none') {
+          window.addEventListener('blur', _onIframeFocus);
+        }
+      }, 60000);
     }
   }
 
