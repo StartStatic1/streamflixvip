@@ -1261,6 +1261,11 @@
   let detailTrailerKey = null;
   let currentSeason = 1;
   let currentEp = 1;
+  // Progresso (0-1) vindo do "Continuar Assistindo" pra retomar o <video>
+  // nativo no ponto certo na próxima vez que playServer() rodar. É consumido
+  // (zerado) depois de usado uma vez, pra não recolocar o usuário no mesmo
+  // ponto se ele trocar de servidor manualmente depois.
+  let pendingResumeProgress = null;
   let seriesDetails = null;
   let seasonEpisodesCache = {};
   const itemStore = {};
@@ -1298,6 +1303,16 @@
     closeSearch();
     const hash = window.location.hash || '#/home';
     const parts = hash.replace('#/','').split('/');
+
+    // Sempre que a rota NÃO é a página de detalhe, garante que o player
+    // (vídeo nativo ou iframe de terceiros) é parado de fato. Sem isso,
+    // showPage() só esconde a página via CSS e o player continua tocando
+    // "por baixo", inclusive mantendo a notificação de mídia ativa.
+    if (parts[0] !== 'title') {
+      stopVideoPlayer();
+      const iframe = document.getElementById('playerFrame');
+      if (iframe) iframe.src = '';
+    }
 
     if (parts[0] === 'all') {
       const type = parts[1] || 'movie';
@@ -1770,8 +1785,12 @@
   // PÁGINA: DETALHES
   // ══════════════════════════════════════
   async function openDetailPage(id, type) {
-    currentSeason = 1;
-    currentEp = 1;
+    // Se já existe progresso salvo (Continuar Assistindo) pra esse título,
+    // retoma a temporada/episódio salvos em vez de sempre abrir do 1x1.
+    const savedEntry = getContinueList().find(i => i.id === id && i.type === type);
+    currentSeason = savedEntry?.season || 1;
+    currentEp = savedEntry?.ep || 1;
+    pendingResumeProgress = (typeof savedEntry?.progress === 'number') ? savedEntry.progress : null;
     seriesDetails = null;
     seasonEpisodesCache = {};
     detailTrailerKey = null;
@@ -1959,6 +1978,19 @@
       iframe.src = ''; iframe.style.display = 'none';
       video.style.display = 'block';
       const playable = resolvePlayableUrl(url);
+
+      // Captura o progresso pendente (se houver) e já consome a variável,
+      // pra não reaplicar o resume caso o usuário troque de servidor depois.
+      const resumeProgress = pendingResumeProgress;
+      pendingResumeProgress = null;
+      const applyResumeOnce = () => {
+        if (typeof resumeProgress === 'number' && video.duration && !isNaN(video.duration)) {
+          video.currentTime = resumeProgress * video.duration;
+        }
+        video.removeEventListener('loadedmetadata', applyResumeOnce);
+      };
+      if (resumeProgress) video.addEventListener('loadedmetadata', applyResumeOnce);
+
       if (isM3u8(playable)) {
         if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
         if (window.Hls && window.Hls.isSupported()) {
@@ -1973,7 +2005,7 @@
       video.removeEventListener('timeupdate', onVideoTimeUpdate);
       video.addEventListener('timeupdate', onVideoTimeUpdate);
       video.play().catch(() => {});
-      saveToContinue(currentItem, currentItemType, currentSeason, currentEp, 0.01);
+      saveToContinue(currentItem, currentItemType, currentSeason, currentEp, resumeProgress || 0.01);
     } else {
       // iframe de terceiros (MegaEmbed/Vidstack/EasyVidPlay): não temos acesso ao tempo
       // de reprodução real, então salvamos "começou a assistir" sem percentual inventado.
