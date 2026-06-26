@@ -2272,6 +2272,18 @@
   // ══════════════════════════════════════
   async function init() {
     initApkBanner();
+
+    // ── Deep link via query string (?id=123&type=movie) ──
+    // Resolve o problema do Telegram/Chrome que corta o # ao abrir links externos
+    const qs = new URLSearchParams(window.location.search);
+    const deepId   = qs.get('id');
+    const deepType = qs.get('type') || 'movie';
+    if (deepId) {
+      // Converte para hash e limpa a query string sem recarregar
+      const newHash = '#/title/' + deepId + '/' + deepType;
+      history.replaceState(null, '', window.location.pathname + newHash);
+    }
+
     await router();
     if (!window.location.hash || window.location.hash === '#/home') {
       await initHome();
