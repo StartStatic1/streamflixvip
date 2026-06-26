@@ -1,4 +1,21 @@
 {
   "cleanUrls": true,
-  "trailingSlash": false
+  "trailingSlash": false,
+  "redirects": [
+    {
+      "source": "http://streamflixvip.online/(.*)",
+      "destination": "https://streamflixvip.online/$1",
+      "permanent": true
+    },
+    {
+      "source": "http://www.streamflixvip.online/(.*)",
+      "destination": "https://streamflixvip.online/$1",
+      "permanent": true
+    },
+    {
+      "source": "https://www.streamflixvip.online/(.*)",
+      "destination": "https://streamflixvip.online/$1",
+      "permanent": true
+    }
+  ]
 }
