@@ -1157,8 +1157,18 @@
   // ══════════════════════════════════════
   let adScriptLoaded = false;
   let adDelayTimer = null;
+  let _lastAdTriggerAt = 0;
+  const AD_TRIGGER_COOLDOWN_MS = 25000; // não deixa disparar de novo antes do popunder anterior já ter sido aberto (20s) + margem
 
   function triggerPlayAd() {
+    // Cooldown: ignora chamadas repetidas dentro da mesma janela de tempo.
+    // Sem isso, gatilhos como "blur" do iframe podem disparar em sequência
+    // rápida (cada clique interno do embed gera um blur na window) e abrir
+    // popups em cascata em vez de um por play.
+    const now = Date.now();
+    if (now - _lastAdTriggerAt < AD_TRIGGER_COOLDOWN_MS) return;
+    _lastAdTriggerAt = now;
+
     // MoneyTag: carrega o script apenas uma vez por sessão
     if (!adScriptLoaded) {
       adScriptLoaded = true;
