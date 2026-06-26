@@ -480,7 +480,11 @@
     .detail-main { min-width:0; }
     .detail-side { position:sticky; top:calc(var(--nav-h) + 20px); }
 
-    .detail-desc { font-size:0.95rem; color:#c0bdd8; line-height:1.7; margin-bottom:28px; }
+    .detail-desc {
+      font-size:0.95rem; color:#c0bdd8; line-height:1.7; margin-bottom:28px;
+      position:sticky; top:var(--nav-h); z-index:5;
+      background:var(--bg); padding-top:14px; padding-bottom:14px;
+    }
 
     .player-wrap {
       width:100%; aspect-ratio:16/9; background:#000; border-radius:12px;
@@ -495,7 +499,7 @@
     .server-btn {
       display:flex; align-items:center; gap:11px;
       background:var(--card); border:1.5px solid var(--border);
-      color:var(--muted); padding:10px 16px; border-radius:11px;
+      color:var(--muted); padding:14px 18px; border-radius:11px;
       transition:all .22s; min-width:160px;
     }
     .server-btn:hover { border-color:var(--accent2); background:var(--card-hover); color:var(--text); }
@@ -777,7 +781,7 @@
       .detail-poster { display:none; }
       .detail-body { padding:20px 18px 60px; gap:20px; }
       .detail-back { top:66px; left:14px; }
-      .server-btn { min-width:auto; flex:1 1 calc(50% - 5px); }
+      .server-btn { min-width:auto; flex:0 1 calc(50% - 5px); }
       .filters-bar { padding:0; }
       .all-page-header { padding:24px 18px 0; }
       .grid { padding:0 18px; }
@@ -2129,7 +2133,7 @@
       else query = query.is('season',null);
       const { data, error } = await query;
       if (error || !data) return [];
-      return data.map(s => ({icon:'⭐', name:s.source_label, tag:'Prioridade', url:s.source_url}));
+      return data.map(s => ({name:s.source_label, tag:'HD', url:s.source_url}));
     } catch(e) { return []; }
   }
 
@@ -2143,19 +2147,18 @@
 
     let fallbackServers = realType === 'movie'
       ? [
-          {icon:'🎬', name:'MegaEmbed', tag:'DUB · HD',  url:`${MGEB_BASE}/embed/${tmdbId}`},
-          {icon:'▶️', name:'Vidstack',  tag:'DUB · HD',  url:`${MGEB_BASE}/embed/${tmdbId}?player=vidstack`},
+          {name:'MegaEmbed', tag:'DUB · HD',  url:`${MGEB_BASE}/embed/${tmdbId}`},
+          {name:'Vidstack',  tag:'DUB · HD',  url:`${MGEB_BASE}/embed/${tmdbId}?player=vidstack`},
         ]
       : [
-          {icon:'🎬', name:'MegaEmbed', tag:'DUB · HD',  url:`${MGEB_BASE}/embed/${tmdbId}/1/1`},
-          {icon:'▶️', name:'Vidstack',  tag:'DUB · HD',  url:`${MGEB_BASE}/embed/${tmdbId}/1/1?player=vidstack`},
+          {name:'MegaEmbed', tag:'DUB · HD',  url:`${MGEB_BASE}/embed/${tmdbId}/1/1`},
+          {name:'Vidstack',  tag:'DUB · HD',  url:`${MGEB_BASE}/embed/${tmdbId}/1/1?player=vidstack`},
         ];
 
-    const servers = [...customServers, ...fallbackServers];
+    const servers = [...fallbackServers, ...customServers];
     grid._servers = servers;
     grid.innerHTML = servers.map((s,i) => `
       <button class="server-btn${i===0?' active':''}" onclick="playServer(${i})">
-        <div class="server-icon-wrap">${s.icon}</div>
         <span class="server-info">
           <span class="server-name">${s.name}</span>
           <span class="server-tag">${s.tag}</span>
