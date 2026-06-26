@@ -1032,8 +1032,11 @@
   // ══════════════════════════════════════
   // CONFIG
   // ══════════════════════════════════════
-  const TMDB_KEY   = '1c40bbe9a9f9e1e8a812d22c4c407d8f';
-  const TMDB_BASE  = 'https://api.themoviedb.org/3';
+  // A TMDB_KEY não fica mais aqui — ela mora apenas na env var TMDB_API_KEY
+  // do servidor (Vercel) e é injetada pelo proxy em /api/tmdb.js.
+  // Isso evita expor a key no bundle do client e evita os 403 que a TMDB
+  // retorna para chamadas feitas direto do navegador.
+  const TMDB_BASE  = '/api/tmdb';
   const IMG_BASE   = 'https://image.tmdb.org/t/p/';
   const MGEB_BASE  = 'https://mgeb.top';
   const CACHE_TTL  = 7200 * 1000;
@@ -1118,9 +1121,8 @@
     const key = path + JSON.stringify(params);
     const cached = cacheGet(key);
     if (cached) return cached;
-    const url = new URL(TMDB_BASE + path);
-    url.searchParams.set('api_key', TMDB_KEY);
-    url.searchParams.set('language', 'pt-BR');
+    const url = new URL(TMDB_BASE, window.location.origin);
+    url.searchParams.set('path', path);
     Object.entries(params).forEach(([k,v]) => url.searchParams.set(k,v));
     try {
       const r = await fetch(url);
@@ -2308,6 +2310,7 @@
   })();
 
 
+  if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('/sw.js')
         .then(reg => console.log('SW registrado:', reg.scope))
