@@ -130,7 +130,10 @@
       background:none; border:none; color:var(--muted);
       font-size:0.88rem; font-weight:600; padding:8px 16px; border-radius:8px;
       transition:all .2s; position:relative; overflow:hidden;
+      display:flex; align-items:center; justify-content:center; gap:7px;
     }
+    .nav-tab-icon { width:18px; height:18px; flex-shrink:0; display:none; }
+    .nav-tab-label { white-space:nowrap; }
     .nav-tab::after {
       content:''; position:absolute; bottom:4px; left:50%; transform:translateX(-50%) scaleX(0);
       width:16px; height:2px; background:var(--accent2); border-radius:2px;
@@ -264,9 +267,25 @@
       font-family:var(--font-display); font-size:1.35rem; font-weight:700;
       color:var(--text); margin-bottom:8px;
     }
-    .auth-modal p {
-      font-size:0.85rem; color:var(--muted); line-height:1.6; margin-bottom:28px;
+    .auth-modal p,
+    .auth-modal-sub {
+      font-size:0.85rem; color:var(--muted); line-height:1.6; margin-bottom:22px;
     }
+    .auth-modal-benefits {
+      list-style:none; text-align:left; margin:0 0 26px; padding:0;
+      display:flex; flex-direction:column; gap:12px;
+    }
+    .auth-modal-benefits li {
+      display:flex; align-items:center; gap:11px;
+      font-size:0.84rem; color:var(--text); font-weight:500;
+    }
+    .amb-icon {
+      width:30px; height:30px; border-radius:9px; flex-shrink:0;
+      background:rgba(139,92,246,0.14); border:1px solid rgba(139,92,246,0.25);
+      display:flex; align-items:center; justify-content:center;
+      color:var(--accent2);
+    }
+    .amb-icon svg { width:16px; height:16px; }
     .btn-google {
       display:flex; align-items:center; justify-content:center; gap:10px;
       width:100%; padding:13px 20px;
@@ -283,6 +302,116 @@
     }
     .auth-modal-footer a { color:var(--accent2); text-decoration:underline; }
 
+    /* ── VIP MODAL ── */
+    .vip-modal-overlay {
+      display:none; position:fixed; inset:0; z-index:10001;
+      background:rgba(0,0,0,0.78); backdrop-filter:blur(8px);
+      align-items:center; justify-content:center;
+    }
+    .vip-modal-overlay.open { display:flex; animation:fadeIn .2s ease; }
+    .vip-modal {
+      background:var(--surface); border:1px solid rgba(240,168,48,0.3);
+      border-radius:20px; padding:36px 32px; max-width:400px; width:90%;
+      text-align:center; position:relative; max-height:90vh; overflow-y:auto;
+      box-shadow:0 24px 80px rgba(0,0,0,0.8), 0 0 0 1px rgba(240,168,48,0.08);
+    }
+    .vip-modal-logo {
+      width:56px; height:56px; border-radius:14px;
+      background:linear-gradient(135deg, var(--gold), #b8780f);
+      display:flex; align-items:center; justify-content:center;
+      font-size:1.7rem; margin:0 auto 16px;
+      box-shadow:0 6px 20px var(--gold-glow);
+    }
+    .vip-modal h2 {
+      font-family:var(--font-display); font-size:1.4rem; font-weight:700;
+      color:var(--gold); margin-bottom:8px;
+    }
+    .vip-plans { display:flex; gap:10px; margin-bottom:18px; }
+    .vip-plan {
+      flex:1; border:1px solid var(--border); border-radius:14px;
+      padding:16px 10px; position:relative; background:rgba(255,255,255,0.02);
+    }
+    .vip-plan-highlight {
+      border-color:rgba(240,168,48,0.5); background:var(--gold-soft);
+    }
+    .vip-plan-badge {
+      position:absolute; top:-10px; left:50%; transform:translateX(-50%);
+      background:var(--gold); color:#1a1305; font-size:0.62rem; font-weight:800;
+      padding:3px 10px; border-radius:20px; white-space:nowrap;
+      text-transform:uppercase; letter-spacing:.3px;
+    }
+    .vip-plan-name { font-size:0.8rem; color:var(--muted); font-weight:600; margin-bottom:6px; }
+    .vip-plan-price { font-size:1.15rem; font-weight:800; color:var(--text); }
+    .vip-howto {
+      font-size:0.78rem; color:var(--muted); line-height:1.5;
+      background:rgba(255,255,255,0.04); border-radius:10px; padding:10px 14px;
+      margin-bottom:18px;
+    }
+    .vip-code-form { display:flex; gap:8px; margin-bottom:10px; }
+    .vip-code-input {
+      flex:1; background:rgba(255,255,255,0.05); border:1px solid var(--border);
+      border-radius:10px; padding:12px 14px; color:var(--text); font-size:0.9rem;
+      font-family:var(--font); text-transform:uppercase; letter-spacing:.5px;
+      min-width:0;
+    }
+    .vip-code-input:focus { outline:none; border-color:var(--gold); }
+    .vip-code-btn {
+      background:linear-gradient(135deg, var(--gold), #b8780f); color:#1a1305;
+      font-weight:800; padding:12px 18px; border-radius:10px; border:none;
+      white-space:nowrap; cursor:pointer; transition:all .2s;
+    }
+    .vip-code-btn:hover { transform:translateY(-1px); box-shadow:0 6px 18px var(--gold-glow); }
+    .vip-code-btn:disabled { opacity:.6; cursor:default; transform:none; }
+    .vip-code-msg {
+      min-height:18px; font-size:0.8rem; font-weight:600; margin-bottom:8px;
+    }
+    .vip-code-msg.error { color:var(--red); }
+    .vip-code-msg.success { color:var(--green); }
+
+    /* ── VIP lock no card de lançamento ── */
+    .card.vip-locked .card-poster,
+    .card.vip-locked .card-poster-placeholder {
+      filter:blur(9px); transform:scale(1.04);
+    }
+    .card.vip-locked .card-lock-badge {
+      position:absolute; inset:0; display:flex; flex-direction:column;
+      align-items:center; justify-content:center; gap:6px; z-index:2;
+      background:rgba(10,10,16,0.35);
+    }
+    .card.vip-locked .card-lock-icon {
+      width:34px; height:34px; border-radius:50%;
+      background:rgba(0,0,0,0.55); border:1px solid rgba(240,168,48,0.5);
+      display:flex; align-items:center; justify-content:center; color:var(--gold);
+    }
+    .card.vip-locked .card-lock-icon svg { width:16px; height:16px; }
+    .card.vip-locked .card-lock-label {
+      font-size:0.66rem; font-weight:800; color:var(--gold);
+      text-transform:uppercase; letter-spacing:.4px;
+      background:rgba(0,0,0,0.55); padding:3px 9px; border-radius:20px;
+    }
+
+    /* ── VIP gate na página de detalhe ── */
+    .vip-gate-box {
+      border:1px solid rgba(240,168,48,0.35); background:var(--gold-soft);
+      border-radius:14px; padding:22px 20px; text-align:center;
+    }
+    .vip-gate-box .vip-gate-icon { font-size:1.8rem; margin-bottom:8px; }
+    .vip-gate-box h3 {
+      font-family:var(--font-display); color:var(--gold); font-size:1.1rem; margin-bottom:6px;
+    }
+    .vip-gate-box p { color:var(--muted); font-size:0.85rem; margin-bottom:16px; line-height:1.5; }
+    .vip-gate-box .btn-primary {
+      background:linear-gradient(135deg, var(--gold), #b8780f); color:#1a1305;
+    }
+
+    /* ── badge VIP no header (usuário com plano ativo) ── */
+    .vip-badge-pill {
+      display:inline-flex; align-items:center; gap:4px;
+      background:var(--gold-soft); color:var(--gold); border:1px solid rgba(240,168,48,0.35);
+      border-radius:20px; padding:2px 9px; font-size:0.62rem; font-weight:800;
+      letter-spacing:.3px; text-transform:uppercase; margin-left:6px;
+    }
+
     /* sync badge */
     .sync-badge {
       display:inline-flex; align-items:center; gap:4px;
@@ -294,7 +423,7 @@
 
     .bottom-nav {
       display:none;
-      position:fixed; bottom:0; left:0; right:0; z-index:200;
+      position:fixed; top:auto; bottom:0; left:0; right:0; z-index:200;
       height:var(--bottom-nav-h);
       background:rgba(8,8,15,0.95);
       backdrop-filter:blur(24px) saturate(160%);
@@ -979,9 +1108,8 @@
 
     @media (max-width:680px) {
       :root { --nav-h: 58px; }
-      .nav-tabs { display:none; }
       nav { justify-content:flex-start; gap:8px; }
-      .logo { font-size:1.3rem; flex:1; justify-content:center; }
+      .logo { font-size:1.3rem; }
       .nav-right { flex-shrink:0; }
       .nav-right .nav-search { max-width:130px; }
       .bottom-nav { display:flex; }
@@ -1017,6 +1145,32 @@
       .ep-overview { display:none; }
     }
 
+    /* ── Header mobile: ícones em pé (retrato), nomes deitado (paisagem) ──
+       Em telas estreitas e altas (celular em pé) não cabe "Início Filmes
+       Séries Animes Minha Lista" por extenso sem quebrar o "Entrar" pra
+       fora da tela — então mostramos só os ícones. Ao girar pra paisagem
+       (ou em qualquer tela larga o suficiente) volta a mostrar o texto. */
+    @media (max-width:680px) and (orientation:portrait) {
+      .logo .brand-animated { display:none; }
+      .logo { flex:0 0 auto; }
+      .nav-tabs { display:flex; flex:1; gap:0; justify-content:space-evenly; }
+      .nav-tab { flex:1; padding:8px 4px; }
+      .nav-tab-icon { display:block; }
+      .nav-tab-label { display:none; }
+      .nav-right .nav-search { display:none; }
+      .nav-right { gap:6px; }
+      .btn-install-apk span,
+      .btn-login span.btn-login-label { display:none; }
+      .btn-install-apk.visible { padding:8px; }
+      .btn-login { padding:7px; }
+      .user-name-short { display:none; }
+    }
+    @media (max-width:680px) and (orientation:landscape) {
+      .nav-tabs { display:flex; }
+      .nav-tab-icon { display:none; }
+      .nav-tab-label { display:inline; }
+    }
+
     @media (max-width:400px) {
       .card { flex:0 0 128px; }
       .row-track .card { flex:0 0 128px; }
@@ -1045,11 +1199,26 @@
     </span>
   </div>
   <div class="nav-tabs">
-    <button class="nav-tab active" data-tab="home" onclick="navigate('home')">Início</button>
-    <button class="nav-tab" data-tab="movies" onclick="navigate('all', 'movie')">Filmes</button>
-    <button class="nav-tab" data-tab="tv" onclick="navigate('all', 'tv')">Séries</button>
-    <button class="nav-tab" data-tab="anime" onclick="navigate('all', 'anime')">Animes</button>
-    <button class="nav-tab" data-tab="watchlist" onclick="navigate('watchlist')">Minha Lista</button>
+    <button class="nav-tab active" data-tab="home" onclick="navigate('home')">
+      <svg class="nav-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1h-5v-7H9v7H4a1 1 0 01-1-1V9.5z"/></svg>
+      <span class="nav-tab-label">Início</span>
+    </button>
+    <button class="nav-tab" data-tab="movies" onclick="navigate('all', 'movie')">
+      <svg class="nav-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M7 3v18M17 3v18M2 8h5M2 16h5M17 8h5M17 16h5"/></svg>
+      <span class="nav-tab-label">Filmes</span>
+    </button>
+    <button class="nav-tab" data-tab="tv" onclick="navigate('all', 'tv')">
+      <svg class="nav-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M9 2l3 4 3-4"/></svg>
+      <span class="nav-tab-label">Séries</span>
+    </button>
+    <button class="nav-tab" data-tab="anime" onclick="navigate('all', 'anime')">
+      <svg class="nav-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5z"/></svg>
+      <span class="nav-tab-label">Animes</span>
+    </button>
+    <button class="nav-tab" data-tab="watchlist" onclick="navigate('watchlist')">
+      <svg class="nav-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+      <span class="nav-tab-label">Minha Lista</span>
+    </button>
   </div>
   <div class="nav-right">
     <div class="nav-search" onclick="document.getElementById('searchInput').focus()">
@@ -1058,12 +1227,12 @@
     </div>
     <button class="btn-install-apk" id="navApkBtn" onclick="triggerApkInstall()">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      Instalar App
+      <span>Instalar App</span>
     </button>
     <!-- AUTH -->
     <button class="btn-login" id="navLoginBtn" onclick="openAuthModal()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-      Entrar
+      <span class="btn-login-label">Entrar</span>
     </button>
     <div class="user-menu-wrap" id="userMenuWrap" style="display:none">
       <div class="user-avatar-btn" onclick="toggleUserDropdown()">
@@ -1081,6 +1250,10 @@
         <button class="user-dropdown-item" onclick="navigate('watchlist');toggleUserDropdown()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
           Minha Lista
+        </button>
+        <button class="user-dropdown-item" id="ddVipItem" onclick="openVipModal();toggleUserDropdown()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19h14M5 19l-1-9 4 3 4-6 4 6 4-3-1 9"/></svg>
+          <span id="ddVipItemLabel">Seja VIP</span>
         </button>
         <button class="user-dropdown-item" onclick="syncFromCloud();toggleUserDropdown()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
@@ -1228,7 +1401,13 @@
           <iframe id="playerFrame" allowfullscreen allow="autoplay; encrypted-media; picture-in-picture" referrerpolicy="no-referrer"></iframe>
           <video id="playerVideo" controls playsinline style="display:none; width:100%; height:100%; background:#000"></video>
         </div>
-        <span class="server-label">Escolha o servidor</span>
+        <div class="vip-gate-box" id="vipGateBox" style="display:none">
+          <div class="vip-gate-icon">👑</div>
+          <h3>Lançamento exclusivo VIP</h3>
+          <p>Este título é muito recente e está disponível só para assinantes VIP. Vire VIP e assista agora mesmo.</p>
+          <button class="btn-primary" onclick="openVipModal('Este lançamento está disponível só para assinantes VIP.')">Quero ser VIP</button>
+        </div>
+        <span class="server-label" id="serverLabel">Escolha o servidor</span>
         <div class="server-grid" id="serverGrid"></div>
         <div class="episodes-box" id="episodesBox" style="display:none"></div>
         <div class="similar-section" id="similarSection"></div>
@@ -1313,6 +1492,10 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
       Minha Lista
     </button>
+    <button class="mobile-sheet-btn" id="sheetVipItem" onclick="openVipModal();closeMobileProfileSheet()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19h14M5 19l-1-9 4 3 4-6 4 6 4-3-1 9"/></svg>
+      <span id="sheetVipItemLabel">Seja VIP</span>
+    </button>
     <button class="mobile-sheet-btn danger" onclick="doSignOut();closeMobileProfileSheet()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
       Sair da conta
@@ -1325,7 +1508,27 @@
     <button class="auth-modal-close" onclick="closeAuthModal()">✕</button>
     <div class="auth-modal-logo">S</div>
     <h2>Entrar no StreamFlixVIP</h2>
-    <p>Faça login para sincronizar sua lista, histórico e continuar assistindo em qualquer dispositivo.</p>
+    <p class="auth-modal-sub">Faça login e leve sua experiência completa para qualquer dispositivo.</p>
+    <ul class="auth-modal-benefits">
+      <li>
+        <span class="amb-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+        </span>
+        Sua lista salva e sincronizada
+      </li>
+      <li>
+        <span class="amb-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg>
+        </span>
+        Continue assistindo de onde parou
+      </li>
+      <li>
+        <span class="amb-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </span>
+        Acesse de qualquer celular ou PC
+      </li>
+    </ul>
     <button class="btn-google" onclick="doGoogleLogin()">
       <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -1338,6 +1541,42 @@
     <div class="auth-modal-footer">
       Ao entrar você concorda com os <a href="/termos.html" target="_blank">Termos de Uso</a>
       e <a href="/privacidade.html" target="_blank">Política de Privacidade</a>.
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL SEJA VIP ── -->
+<div class="vip-modal-overlay" id="vipModal">
+  <div class="vip-modal">
+    <button class="auth-modal-close" onclick="closeVipModal()">✕</button>
+    <div class="vip-modal-logo">👑</div>
+    <h2>Seja VIP</h2>
+    <p class="auth-modal-sub" id="vipModalSub">Desbloqueie lançamentos antecipados e assista sem anúncios.</p>
+
+    <div class="vip-plans">
+      <div class="vip-plan">
+        <div class="vip-plan-name">30 dias</div>
+        <div class="vip-plan-price">R$ 5,99</div>
+      </div>
+      <div class="vip-plan vip-plan-highlight">
+        <div class="vip-plan-badge">Melhor valor</div>
+        <div class="vip-plan-name">Vitalício</div>
+        <div class="vip-plan-price">R$ 49,90</div>
+      </div>
+    </div>
+
+    <div class="vip-howto">
+      Comprou um plano? Fale com a gente para receber seu código de ativação.
+    </div>
+
+    <form class="vip-code-form" id="vipCodeForm" onsubmit="event.preventDefault();redeemVipCode();">
+      <input type="text" id="vipCodeInput" class="vip-code-input" placeholder="Digite seu código" autocomplete="off" autocapitalize="characters" />
+      <button type="submit" class="btn-primary vip-code-btn" id="vipCodeBtn">Ativar</button>
+    </form>
+    <div class="vip-code-msg" id="vipCodeMsg"></div>
+
+    <div class="auth-modal-footer">
+      Já é VIP e ativou em outra conta? O código é vinculado à sua conta Google.
     </div>
   </div>
 </div>
@@ -1471,6 +1710,9 @@
   const AD_TRIGGER_COOLDOWN_MS = 25000; // não deixa disparar de novo antes do popunder anterior já ter sido aberto (20s) + margem
 
   function triggerPlayAd() {
+    // VIP não vê anúncios: nem o script do Monetag chega a carregar.
+    if (isVip()) return false;
+
     // Cooldown: ignora chamadas repetidas dentro da mesma janela de tempo.
     // Sem isso, gatilhos como "blur" do iframe podem disparar em sequência
     // rápida (cada clique interno do embed gera um blur na window) e abrir
@@ -1717,11 +1959,25 @@
     const saved = isInWatchlist(item.id, type);
     const badgeLabel = type === 'movie' ? 'FILME' : (type === 'anime' ? 'ANIME' : 'SÉRIE');
     itemStore[type + ':' + item.id] = item;
+
+    const locked = isRecentReleaseLocked(item);
+    const cardClick = locked
+      ? `event.stopPropagation();openVipModal('Este lançamento está disponível só para assinantes VIP.')`
+      : `navigate('title',{id:${item.id},type:'${type}'})`;
+    const lockBadge = locked ? `
+          <div class="card-lock-badge">
+            <div class="card-lock-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+            </div>
+            <span class="card-lock-label">VIP</span>
+          </div>` : '';
+
     return `
-      <div class="card" onclick="navigate('title',{id:${item.id},type:'${type}'})">
+      <div class="card${locked ? ' vip-locked' : ''}" data-item-id="${item.id}" data-item-type="${type}" onclick="${cardClick}">
         <div class="card-poster-wrap">
           ${poster}
           <span class="card-badge-type">${badgeLabel}</span>
+          ${lockBadge}
           <button class="card-fav-btn ${saved?'saved':''}" onclick="event.stopPropagation();toggleCardFav(${item.id},'${type}',this)" title="${saved?'Remover da lista':'Salvar na lista'}">
             ${saved ? '★' : '☆'}
           </button>
@@ -2246,6 +2502,27 @@
 
     await buildServerBar(full, type);
 
+    // ── VIP gate: lançamento recente bloqueado para não-VIP ──
+    // Mostra a sinopse normalmente, mas esconde o player e a lista de
+    // servidores, trocando por uma chamada para virar VIP.
+    const gateBox = document.getElementById('vipGateBox');
+    const playerWrapEl = document.getElementById('playerWrap');
+    const serverLabelEl = document.getElementById('serverLabel');
+    const serverGridEl = document.getElementById('serverGrid');
+    if (isRecentReleaseLocked(full)) {
+      gateBox.style.display = 'block';
+      playerWrapEl.style.display = 'none';
+      serverLabelEl.style.display = 'none';
+      serverGridEl.style.display = 'none';
+      stopVideoPlayer();
+      document.getElementById('playerFrame').src = '';
+    } else {
+      gateBox.style.display = 'none';
+      playerWrapEl.style.display = '';
+      serverLabelEl.style.display = '';
+      serverGridEl.style.display = '';
+    }
+
     const episodesBox = document.getElementById('episodesBox');
     if (realType === 'tv') {
       episodesBox.style.display = 'block';
@@ -2677,6 +2954,8 @@
   // AUTH – GOOGLE LOGIN (SUPABASE OAUTH)
   // ══════════════════════════════════════
   let _currentUser = null;
+  let _vipStatus = { isVip: false, expiresAt: null, planLabel: null };
+  const VIP_LOCK_DAYS = 30; // títulos lançados há menos de 30 dias ficam bloqueados para não-VIP
 
   function openAuthModal() {
     document.getElementById('authModal').classList.add('open');
@@ -2708,6 +2987,7 @@
     toggleUserDropdown(false);
     await db.auth.signOut();
     _currentUser = null;
+    _vipStatus = { isVip: false, expiresAt: null, planLabel: null };
     // Limpa dados locais ao deslogar
     localStorage.removeItem('sfv_watchlist');
     localStorage.removeItem('sfv_continue');
@@ -2715,6 +2995,175 @@
     renderContinueRow();
     renderWatchlistPage();
     showToast('👋 Saiu da conta');
+  }
+
+  // ══════════════════════════════════════
+  // VIP
+  // ══════════════════════════════════════
+  function isVip() { return !!_vipStatus.isVip; }
+
+  // Considera "lançamento bloqueado" qualquer título cuja data de lançamento
+  // (release_date para filme, first_air_date para série/anime) esteja dentro
+  // dos últimos VIP_LOCK_DAYS dias. Títulos sem data ou no futuro não bloqueiam
+  // (futuro ainda não estreou; sem data não há como avaliar).
+  function isRecentReleaseLocked(item) {
+    if (isVip()) return false;
+    const dateStr = item?.release_date || item?.first_air_date;
+    if (!dateStr) return false;
+    const releaseDate = new Date(dateStr);
+    if (isNaN(releaseDate.getTime())) return false;
+    const now = new Date();
+    if (releaseDate > now) return false; // ainda não lançou, não é "lançamento recente bloqueado"
+    const diffDays = (now - releaseDate) / (1000 * 60 * 60 * 24);
+    return diffDays <= VIP_LOCK_DAYS;
+  }
+
+  async function refreshVipStatus() {
+    if (!_currentUser) {
+      _vipStatus = { isVip: false, expiresAt: null, planLabel: null };
+      updateVipUI();
+      return;
+    }
+    try {
+      const res = await fetch(`/api/vip-status?userId=${encodeURIComponent(_currentUser.id)}`);
+      const data = await res.json();
+      _vipStatus = {
+        isVip: !!data.isVip,
+        expiresAt: data.expiresAt || null,
+        planLabel: data.planLabel || null,
+      };
+    } catch (e) {
+      console.warn('refreshVipStatus error:', e);
+    }
+    updateVipUI();
+  }
+
+  function updateVipUI() {
+    document.querySelectorAll('.vip-badge-pill').forEach(el => el.remove());
+    const vipLabel = isVip()
+      ? (_vipStatus.expiresAt ? 'VIP ativo · ' + formatVipExpiry(_vipStatus.expiresAt) : 'VIP ativo')
+      : 'Seja VIP';
+    const ddLabel = document.getElementById('ddVipItemLabel');
+    const sheetLabel = document.getElementById('sheetVipItemLabel');
+    if (ddLabel) ddLabel.textContent = vipLabel;
+    if (sheetLabel) sheetLabel.textContent = vipLabel;
+
+    if (isVip()) {
+      const nameShort = document.getElementById('userNameShort');
+      const sheetName = document.getElementById('sheetName');
+      [nameShort, sheetName].forEach(el => {
+        if (el) {
+          const badge = document.createElement('span');
+          badge.className = 'vip-badge-pill';
+          badge.textContent = 'VIP';
+          el.insertAdjacentElement('afterend', badge);
+        }
+      });
+    }
+    // Re-aplica (ou remove) o bloqueio visual em todos os cards de lançamento
+    // já renderizados na tela, sem precisar reconstruir nenhuma lista.
+    document.querySelectorAll('.card[data-item-id]').forEach(applyVipLockToCardEl);
+  }
+
+  function formatVipExpiry(isoDate) {
+    const d = new Date(isoDate);
+    if (isNaN(d.getTime())) return '';
+    // Vitalício é guardado como uma data ~100 anos no futuro
+    if (d.getFullYear() > new Date().getFullYear() + 50) return 'vitalício';
+    return 'até ' + d.toLocaleDateString('pt-BR');
+  }
+
+  function applyVipLockToCardEl(cardEl) {
+    const id = cardEl.dataset.itemId;
+    const type = cardEl.dataset.itemType;
+    const item = itemStore[type + ':' + id];
+    if (!item) return;
+    const locked = isRecentReleaseLocked(item);
+    cardEl.classList.toggle('vip-locked', locked);
+    let badge = cardEl.querySelector('.card-lock-badge');
+    if (locked && !badge) {
+      const wrap = cardEl.querySelector('.card-poster-wrap');
+      if (wrap) {
+        wrap.insertAdjacentHTML('beforeend', `
+          <div class="card-lock-badge">
+            <div class="card-lock-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+            </div>
+            <span class="card-lock-label">VIP</span>
+          </div>`);
+      }
+    } else if (!locked && badge) {
+      badge.remove();
+    }
+    cardEl.setAttribute('onclick', locked
+      ? `event.stopPropagation();openVipModal('Este lançamento está disponível só para assinantes VIP.')`
+      : `navigate('title',{id:${item.id},type:'${type}'})`);
+  }
+
+  function openVipModal(message) {
+    if (!_currentUser) {
+      closeVipModal();
+      showToast('🔐 Faça login primeiro para ativar o VIP');
+      openAuthModal();
+      return;
+    }
+    const sub = document.getElementById('vipModalSub');
+    if (sub) sub.textContent = message || 'Desbloqueie lançamentos antecipados e assista sem anúncios.';
+    document.getElementById('vipCodeMsg').textContent = '';
+    document.getElementById('vipCodeMsg').className = 'vip-code-msg';
+    document.getElementById('vipCodeInput').value = '';
+    document.getElementById('vipModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeVipModal() {
+    document.getElementById('vipModal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  async function redeemVipCode() {
+    const input = document.getElementById('vipCodeInput');
+    const btn = document.getElementById('vipCodeBtn');
+    const msg = document.getElementById('vipCodeMsg');
+    const code = input.value.trim();
+    if (!code) return;
+    if (!_currentUser) {
+      openVipModal();
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = 'Ativando...';
+    msg.textContent = '';
+    msg.className = 'vip-code-msg';
+    try {
+      const res = await fetch('/api/redeem-vip', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, userId: _currentUser.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        msg.textContent = '❌ ' + (data.error || 'Código inválido.');
+        msg.className = 'vip-code-msg error';
+        return;
+      }
+      _vipStatus = { isVip: true, expiresAt: data.expiresAt, planLabel: data.planLabel };
+      updateVipUI();
+      msg.textContent = '✅ VIP ativado com sucesso!';
+      msg.className = 'vip-code-msg success';
+      showToast('👑 Bem-vindo ao VIP!');
+      setTimeout(() => {
+        closeVipModal();
+        // Reabre a página atual para liberar conteúdo bloqueado imediatamente
+        router();
+      }, 1200);
+    } catch (e) {
+      console.error('redeemVipCode error:', e);
+      msg.textContent = '❌ Falha ao ativar. Tente novamente.';
+      msg.className = 'vip-code-msg error';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Ativar';
+    }
   }
 
   function toggleUserDropdown(force) {
@@ -2868,6 +3317,7 @@
       closeAuthModal();
       // Load cloud data on login
       await syncFromCloud();
+      await refreshVipStatus();
     }
 
     db.auth.onAuthStateChange(async (event, session) => {
@@ -2883,9 +3333,12 @@
           showToast('✅ Login realizado com sucesso!');
         }
         await syncFromCloud();
+        await refreshVipStatus();
       }
       if (event === 'SIGNED_OUT') {
         updateAuthUI(null);
+        _vipStatus = { isVip: false, expiresAt: null, planLabel: null };
+        updateVipUI();
       }
     });
   }
