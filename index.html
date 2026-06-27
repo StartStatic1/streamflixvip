@@ -318,6 +318,20 @@
     .bottom-nav-btn.active svg { transform:scale(1.12); }
     .bottom-nav-btn:active { transform:scale(0.93); }
 
+    /* ── Mobile profile/login button ── */
+    .bnav-avatar {
+      width:24px; height:24px; border-radius:50%;
+      background:linear-gradient(135deg, var(--accent), var(--gold));
+      display:flex; align-items:center; justify-content:center;
+      font-size:0.7rem; font-weight:700; color:#fff;
+      overflow:hidden; flex-shrink:0;
+      border:2px solid var(--accent2);
+    }
+    .bnav-avatar img { width:100%; height:100%; object-fit:cover; }
+    #bnav-profile-logged { display:none; }
+    #bnav-profile-logged.visible { display:flex; }
+    #bnav-profile-login.hidden { display:none; }
+
     .page { display:none; }
     .page.active { display:block; animation:fadeIn .3s ease; }
     @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
@@ -1053,6 +1067,16 @@
     <button class="bottom-nav-btn" id="bnav-watchlist" onclick="navigate('watchlist')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
       Minha Lista
+    </button>
+    <!-- Login button (logged out) -->
+    <button class="bottom-nav-btn" id="bnav-profile-login" onclick="openAuthModal()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Entrar
+    </button>
+    <!-- Profile button (logged in) -->
+    <button class="bottom-nav-btn" id="bnav-profile-logged" onclick="toggleUserDropdown()">
+      <div class="bnav-avatar" id="bnavAvatar"><span id="bnavInitial">?</span></div>
+      <span id="bnavName">Perfil</span>
     </button>
   </div>
 </nav>
@@ -2639,6 +2663,13 @@
     const ddName     = document.getElementById('ddUserName');
     const ddEmail    = document.getElementById('ddUserEmail');
 
+    // Mobile nav elements
+    const bnavLogin  = document.getElementById('bnav-profile-login');
+    const bnavLogged = document.getElementById('bnav-profile-logged');
+    const bnavAvatar = document.getElementById('bnavAvatar');
+    const bnavInitial= document.getElementById('bnavInitial');
+    const bnavName   = document.getElementById('bnavName');
+
     if (user) {
       loginBtn.style.display = 'none';
       userWrap.style.display = 'flex';
@@ -2657,9 +2688,22 @@
         avatarEl.innerHTML = `<span>${name[0].toUpperCase()}</span>`;
       }
       initEl && (initEl.textContent = name[0].toUpperCase());
+
+      // Mobile nav: show profile, hide login
+      if (bnavLogin) bnavLogin.classList.add('hidden');
+      if (bnavLogged) bnavLogged.classList.add('visible');
+      if (bnavInitial) bnavInitial.textContent = name[0].toUpperCase();
+      if (bnavName) bnavName.textContent = name.split(' ')[0];
+      if (bnavAvatar && avatar) {
+        bnavAvatar.innerHTML = `<img src="${avatar}" alt="${name}" onerror="this.innerHTML='<span>${name[0].toUpperCase()}</span>'" />`;
+      }
     } else {
       loginBtn.style.display = 'flex';
       userWrap.style.display = 'none';
+
+      // Mobile nav: show login, hide profile
+      if (bnavLogin) bnavLogin.classList.remove('hidden');
+      if (bnavLogged) bnavLogged.classList.remove('visible');
     }
   }
 
