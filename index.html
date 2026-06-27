@@ -332,6 +332,55 @@
     #bnav-profile-logged.visible { display:flex; }
     #bnav-profile-login.hidden { display:none; }
 
+    /* ── Mobile profile bottom sheet ── */
+    .mobile-profile-sheet {
+      display:none; position:fixed; inset:0; z-index:5000;
+    }
+    .mobile-profile-sheet.open { display:block; }
+    .mobile-profile-backdrop {
+      position:absolute; inset:0; background:rgba(0,0,0,0.6);
+    }
+    .mobile-profile-panel {
+      position:absolute; bottom:0; left:0; right:0;
+      background:var(--surface); border-radius:20px 20px 0 0;
+      border-top:1px solid var(--border);
+      padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));
+      animation:slideUp .25s var(--transition);
+    }
+    @keyframes slideUp {
+      from { transform:translateY(100%); }
+      to   { transform:translateY(0); }
+    }
+    .mobile-profile-handle {
+      width:36px; height:4px; border-radius:2px;
+      background:var(--border); margin:0 auto 16px;
+    }
+    .mobile-profile-user {
+      display:flex; align-items:center; gap:12px;
+      padding:12px; background:var(--card); border-radius:12px;
+      margin-bottom:12px;
+    }
+    .mobile-profile-avatar {
+      width:40px; height:40px; border-radius:50%;
+      background:linear-gradient(135deg,var(--accent),var(--gold));
+      display:flex; align-items:center; justify-content:center;
+      font-size:1rem; font-weight:700; color:#fff;
+      overflow:hidden; flex-shrink:0; border:2px solid var(--accent2);
+    }
+    .mobile-profile-avatar img { width:100%; height:100%; object-fit:cover; }
+    .mobile-profile-name { font-weight:700; font-size:0.95rem; }
+    .mobile-profile-email { font-size:0.75rem; color:var(--muted); margin-top:2px; }
+    .mobile-sheet-btn {
+      display:flex; align-items:center; gap:12px;
+      width:100%; padding:13px 12px; border-radius:10px;
+      border:none; background:none; color:var(--text);
+      font-family:var(--font); font-size:0.9rem; font-weight:500;
+      cursor:pointer; transition:background .15s; text-align:left;
+    }
+    .mobile-sheet-btn:hover, .mobile-sheet-btn:active { background:rgba(255,255,255,0.06); }
+    .mobile-sheet-btn.danger { color:var(--red); }
+    .mobile-sheet-btn svg { width:18px; height:18px; opacity:.75; flex-shrink:0; }
+
     .page { display:none; }
     .page.active { display:block; animation:fadeIn .3s ease; }
     @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
@@ -1074,7 +1123,7 @@
       Entrar
     </button>
     <!-- Profile button (logged in) -->
-    <button class="bottom-nav-btn" id="bnav-profile-logged" onclick="toggleUserDropdown()">
+    <button class="bottom-nav-btn" id="bnav-profile-logged" onclick="openMobileProfileSheet()">
       <div class="bnav-avatar" id="bnavAvatar"><span id="bnavInitial">?</span></div>
       <span id="bnavName">Perfil</span>
     </button>
@@ -1248,6 +1297,29 @@
 <div class="toast" id="toast"></div>
 
 <!-- ── AUTH MODAL ── -->
+<!-- ── MOBILE PROFILE SHEET ── -->
+<div class="mobile-profile-sheet" id="mobileProfileSheet">
+  <div class="mobile-profile-backdrop" onclick="closeMobileProfileSheet()"></div>
+  <div class="mobile-profile-panel">
+    <div class="mobile-profile-handle"></div>
+    <div class="mobile-profile-user">
+      <div class="mobile-profile-avatar" id="sheetAvatar"><span id="sheetInitial">?</span></div>
+      <div>
+        <div class="mobile-profile-name" id="sheetName">Usuário</div>
+        <div class="mobile-profile-email" id="sheetEmail"></div>
+      </div>
+    </div>
+    <button class="mobile-sheet-btn" onclick="navigate('watchlist');closeMobileProfileSheet()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+      Minha Lista
+    </button>
+    <button class="mobile-sheet-btn danger" onclick="doSignOut();closeMobileProfileSheet()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Sair da conta
+    </button>
+  </div>
+</div>
+
 <div class="auth-modal-overlay" id="authModal">
   <div class="auth-modal">
     <button class="auth-modal-close" onclick="closeAuthModal()">✕</button>
@@ -2654,6 +2726,15 @@
     }
   });
 
+  function openMobileProfileSheet() {
+    document.getElementById('mobileProfileSheet').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeMobileProfileSheet() {
+    document.getElementById('mobileProfileSheet').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
   function updateAuthUI(user) {
     const loginBtn   = document.getElementById('navLoginBtn');
     const userWrap   = document.getElementById('userMenuWrap');
@@ -2697,6 +2778,18 @@
       if (bnavAvatar && avatar) {
         bnavAvatar.innerHTML = `<img src="${avatar}" alt="${name}" onerror="this.innerHTML='<span>${name[0].toUpperCase()}</span>'" />`;
       }
+
+      // Populate mobile sheet
+      const sheetAvatar  = document.getElementById('sheetAvatar');
+      const sheetInitial = document.getElementById('sheetInitial');
+      const sheetName    = document.getElementById('sheetName');
+      const sheetEmail   = document.getElementById('sheetEmail');
+      if (sheetName)  sheetName.textContent  = name;
+      if (sheetEmail) sheetEmail.textContent = email;
+      if (sheetInitial) sheetInitial.textContent = name[0].toUpperCase();
+      if (sheetAvatar && avatar) {
+        sheetAvatar.innerHTML = `<img src="${avatar}" alt="${name}" onerror="this.innerHTML='<span>${name[0].toUpperCase()}</span>'" />`;
+      }
     } else {
       loginBtn.style.display = 'flex';
       userWrap.style.display = 'none';
@@ -2735,21 +2828,24 @@
   }
 
   async function syncFromCloud() {
-    if (!db || !_currentUser) { showToast('⚠️ Faça login para sincronizar'); return; }
+    if (!db || !_currentUser) return;
     try {
       const { data, error } = await db.from('user_data')
         .select('watchlist,continue_list')
         .eq('user_id', _currentUser.id)
         .single();
-      if (error || !data) { showToast('☁️ Nenhum dado na nuvem ainda'); return; }
+      // PGRST116 = nenhuma linha (usuário novo) — normal, não é erro
+      if (error) {
+        if (error.code !== 'PGRST116') console.warn('syncFromCloud:', error.message);
+        return;
+      }
+      if (!data) return;
       if (data.watchlist?.length)    saveWatchlist(data.watchlist);
       if (data.continue_list?.length) localStorage.setItem('sfv_continue', JSON.stringify(data.continue_list));
-      showToast('✅ Dados sincronizados!');
       renderContinueRow();
       renderWatchlistPage();
     } catch(e) {
       console.warn('syncFromCloud error:', e);
-      showToast('❌ Erro ao sincronizar');
     }
   }
 
@@ -2770,11 +2866,15 @@
     }
 
     db.auth.onAuthStateChange(async (event, session) => {
+      const wasSignedIn = !!_currentUser;
       _currentUser = session?.user || null;
       updateAuthUI(_currentUser);
       if (event === 'SIGNED_IN') {
         closeAuthModal();
-        showToast('✅ Login realizado com sucesso!');
+        // Só mostra toast se o usuário acabou de fazer login (não era logado antes)
+        if (!wasSignedIn) {
+          showToast('✅ Login realizado com sucesso!');
+        }
         await syncFromCloud();
       }
       if (event === 'SIGNED_OUT') {
