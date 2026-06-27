@@ -2708,7 +2708,12 @@
     toggleUserDropdown(false);
     await db.auth.signOut();
     _currentUser = null;
+    // Limpa dados locais ao deslogar
+    localStorage.removeItem('sfv_watchlist');
+    localStorage.removeItem('sfv_continue');
     updateAuthUI(null);
+    renderContinueRow();
+    renderWatchlistPage();
     showToast('👋 Saiu da conta');
   }
 
@@ -2871,8 +2876,10 @@
       updateAuthUI(_currentUser);
       if (event === 'SIGNED_IN') {
         closeAuthModal();
-        // Só mostra toast se o usuário acabou de fazer login (não era logado antes)
         if (!wasSignedIn) {
+          // Limpa dados da conta anterior antes de carregar os da nova conta
+          localStorage.removeItem('sfv_watchlist');
+          localStorage.removeItem('sfv_continue');
           showToast('✅ Login realizado com sucesso!');
         }
         await syncFromCloud();
