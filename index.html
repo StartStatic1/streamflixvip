@@ -85,10 +85,45 @@
       display:flex; align-items:center; justify-content:center;
       font-size:0.9rem; font-weight:800; color:#fff; font-family:var(--font);
       flex-shrink:0;
+      animation: logo-icon-pulse 4s ease-in-out infinite;
+    }
+    @keyframes logo-icon-pulse {
+      0%,100% { box-shadow: 0 0 10px rgba(109,40,217,0.5); }
+      50% { box-shadow: 0 0 18px rgba(240,168,48,0.6); }
     }
     .logo em { font-style:italic; color:var(--gold); }
     .brand-name { display:inline-flex; align-items:baseline; }
-    .brand-name em { font-style:italic; color:var(--gold); margin:0 1px; }
+    .brand-name em { font-style:italic; margin:0 1px; }
+
+    /* ── Animated brand name ── */
+    .brand-animated {
+      display:inline-flex; align-items:baseline; gap:0;
+      font-family:var(--font-display); font-weight:700;
+    }
+    .brand-animated .b-stream { color:var(--text); }
+    .brand-animated .b-flix {
+      font-style:italic;
+      background: linear-gradient(90deg,
+        #6d28d9 0%, #8b5cf6 20%, #f0a830 40%, #e5304a 60%, #8b5cf6 80%, #6d28d9 100%);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: brand-shimmer 3.5s linear infinite;
+    }
+    .brand-animated .b-vip {
+      color:var(--gold);
+      animation: brand-vip-glow 3.5s ease-in-out infinite;
+    }
+    @keyframes brand-shimmer {
+      0% { background-position: 200% center; }
+      100% { background-position: 0% center; }
+    }
+    @keyframes brand-vip-glow {
+      0%,100% { text-shadow: 0 0 6px rgba(240,168,48,0.3); color:var(--gold); }
+      40% { text-shadow: 0 0 16px rgba(240,168,48,0.8); color:#ffe48a; }
+      70% { text-shadow: 0 0 8px rgba(109,40,217,0.5); color:#c084fc; }
+    }
 
     .nav-tabs { display:flex; gap:2px; }
     .nav-tab {
@@ -134,6 +169,128 @@
     }
     .btn-install-apk:hover { transform:translateY(-1px); box-shadow:0 6px 20px var(--accent-glow); }
     .btn-install-apk.visible { display:flex; }
+
+    /* ── AUTH BUTTON ── */
+    .btn-login {
+      display:flex; align-items:center; gap:7px;
+      background:rgba(255,255,255,0.07); border:1px solid var(--border);
+      color:var(--text); font-size:0.82rem; font-weight:600;
+      padding:7px 14px; border-radius:9px;
+      transition:all .2s; white-space:nowrap; cursor:pointer;
+    }
+    .btn-login:hover { background:rgba(109,40,217,0.18); border-color:var(--accent2); }
+    .btn-login svg { width:16px; height:16px; flex-shrink:0; }
+
+    .user-menu-wrap { position:relative; }
+    .user-avatar-btn {
+      display:flex; align-items:center; gap:8px;
+      background:rgba(255,255,255,0.06); border:1px solid var(--border);
+      border-radius:10px; padding:5px 10px 5px 6px;
+      cursor:pointer; transition:all .2s;
+    }
+    .user-avatar-btn:hover { border-color:var(--accent2); background:rgba(139,92,246,0.12); }
+    .user-avatar {
+      width:28px; height:28px; border-radius:50%;
+      object-fit:cover; border:2px solid var(--accent2);
+      background:linear-gradient(135deg,var(--accent),var(--gold));
+      display:flex; align-items:center; justify-content:center;
+      font-size:0.7rem; font-weight:800; color:#fff;
+      flex-shrink:0; overflow:hidden;
+    }
+    .user-avatar img { width:100%; height:100%; object-fit:cover; }
+    .user-name-short {
+      font-size:0.8rem; font-weight:600; color:var(--text);
+      max-width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    }
+
+    .user-dropdown {
+      display:none; position:absolute; top:calc(100% + 10px); right:0;
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:14px; min-width:220px; padding:8px;
+      box-shadow:0 16px 48px rgba(0,0,0,0.6);
+      z-index:9999; animation:fadeIn .15s ease;
+    }
+    .user-dropdown.open { display:block; }
+    .user-dropdown-header {
+      padding:10px 12px 12px; border-bottom:1px solid var(--border-soft); margin-bottom:6px;
+    }
+    .user-dropdown-header .ud-name {
+      font-weight:700; font-size:0.9rem; color:var(--text);
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .user-dropdown-header .ud-email {
+      font-size:0.75rem; color:var(--muted); margin-top:2px;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .user-dropdown-item {
+      display:flex; align-items:center; gap:10px;
+      padding:9px 12px; border-radius:8px; cursor:pointer;
+      font-size:0.85rem; font-weight:500; color:var(--text);
+      transition:background .15s; border:none; background:none; width:100%;
+      text-align:left;
+    }
+    .user-dropdown-item:hover { background:rgba(255,255,255,0.06); }
+    .user-dropdown-item.danger { color:var(--red); }
+    .user-dropdown-item.danger:hover { background:rgba(229,48,74,0.1); }
+    .user-dropdown-item svg { width:16px; height:16px; flex-shrink:0; opacity:.75; }
+
+    /* ── AUTH MODAL ── */
+    .auth-modal-overlay {
+      display:none; position:fixed; inset:0; z-index:10000;
+      background:rgba(0,0,0,0.75); backdrop-filter:blur(8px);
+      align-items:center; justify-content:center;
+    }
+    .auth-modal-overlay.open { display:flex; animation:fadeIn .2s ease; }
+    .auth-modal {
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:20px; padding:40px 36px; max-width:380px; width:90%;
+      text-align:center; position:relative;
+      box-shadow:0 24px 80px rgba(0,0,0,0.8);
+    }
+    .auth-modal-close {
+      position:absolute; top:14px; right:14px;
+      background:none; border:none; color:var(--muted); cursor:pointer;
+      font-size:1.2rem; padding:4px; border-radius:6px; transition:color .2s;
+    }
+    .auth-modal-close:hover { color:var(--text); }
+    .auth-modal-logo {
+      width:56px; height:56px; border-radius:14px;
+      background:linear-gradient(135deg, var(--accent), var(--gold));
+      display:flex; align-items:center; justify-content:center;
+      font-size:1.5rem; font-weight:800; color:#fff;
+      margin:0 auto 18px; font-family:var(--font);
+    }
+    .auth-modal h2 {
+      font-family:var(--font-display); font-size:1.35rem; font-weight:700;
+      color:var(--text); margin-bottom:8px;
+    }
+    .auth-modal p {
+      font-size:0.85rem; color:var(--muted); line-height:1.6; margin-bottom:28px;
+    }
+    .btn-google {
+      display:flex; align-items:center; justify-content:center; gap:10px;
+      width:100%; padding:13px 20px;
+      background:#fff; color:#1a1a2e;
+      font-size:0.92rem; font-weight:700; border:none; border-radius:12px;
+      cursor:pointer; transition:all .2s;
+      box-shadow:0 4px 14px rgba(0,0,0,0.3);
+    }
+    .btn-google:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,0.4); }
+    .btn-google:active { transform:translateY(0); }
+    .btn-google svg { width:20px; height:20px; flex-shrink:0; }
+    .auth-modal-footer {
+      font-size:0.72rem; color:var(--muted-dim); margin-top:20px; line-height:1.5;
+    }
+    .auth-modal-footer a { color:var(--accent2); text-decoration:underline; }
+
+    /* sync badge */
+    .sync-badge {
+      display:inline-flex; align-items:center; gap:4px;
+      background:rgba(74,222,128,0.12); color:var(--green);
+      border:1px solid rgba(74,222,128,0.25); border-radius:6px;
+      font-size:0.68rem; font-weight:700; padding:3px 8px;
+      letter-spacing:.5px; text-transform:uppercase;
+    }
 
     .bottom-nav {
       display:none;
@@ -820,7 +977,9 @@
 <nav id="mainNav">
   <div class="logo" onclick="navigate('home')">
     <div class="logo-icon">S</div>
-    <span class="brand-name">Stream<em>Flix</em>VIP</span>
+    <span class="brand-animated">
+      <span class="b-stream">Stream</span><span class="b-flix">Flix</span><span class="b-vip">VIP</span>
+    </span>
   </div>
   <div class="nav-tabs">
     <button class="nav-tab active" data-tab="home" onclick="navigate('home')">Início</button>
@@ -838,6 +997,38 @@
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       Instalar App
     </button>
+    <!-- AUTH -->
+    <button class="btn-login" id="navLoginBtn" onclick="openAuthModal()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+      Entrar
+    </button>
+    <div class="user-menu-wrap" id="userMenuWrap" style="display:none">
+      <div class="user-avatar-btn" onclick="toggleUserDropdown()">
+        <div class="user-avatar" id="userAvatarEl">
+          <span id="userAvatarInitial">U</span>
+        </div>
+        <span class="user-name-short" id="userNameShort">Usuário</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="user-dropdown" id="userDropdown">
+        <div class="user-dropdown-header">
+          <div class="ud-name" id="ddUserName">—</div>
+          <div class="ud-email" id="ddUserEmail">—</div>
+        </div>
+        <button class="user-dropdown-item" onclick="navigate('watchlist');toggleUserDropdown()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+          Minha Lista
+        </button>
+        <button class="user-dropdown-item" onclick="syncFromCloud();toggleUserDropdown()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+          Sincronizar Dados
+        </button>
+        <button class="user-dropdown-item danger" onclick="doSignOut()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Sair
+        </button>
+      </div>
+    </div>
   </div>
 </nav>
 
@@ -1032,6 +1223,29 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- ── AUTH MODAL ── -->
+<div class="auth-modal-overlay" id="authModal">
+  <div class="auth-modal">
+    <button class="auth-modal-close" onclick="closeAuthModal()">✕</button>
+    <div class="auth-modal-logo">S</div>
+    <h2>Entrar no StreamFlixVIP</h2>
+    <p>Faça login para sincronizar sua lista, histórico e continuar assistindo em qualquer dispositivo.</p>
+    <button class="btn-google" onclick="doGoogleLogin()">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+      </svg>
+      Continuar com Google
+    </button>
+    <div class="auth-modal-footer">
+      Ao entrar você concorda com os <a href="/termos.html" target="_blank">Termos de Uso</a>
+      e <a href="/privacidade.html" target="_blank">Política de Privacidade</a>.
+    </div>
+  </div>
+</div>
+
 <script>
   // ══════════════════════════════════════
   // CONFIG
@@ -1208,7 +1422,10 @@
     try { return JSON.parse(localStorage.getItem('sfv_watchlist') || '[]'); } catch(e) { return []; }
   }
   function saveWatchlist(list) {
-    try { localStorage.setItem('sfv_watchlist', JSON.stringify(list)); } catch(e) {}
+    try {
+      localStorage.setItem('sfv_watchlist', JSON.stringify(list));
+      if (_currentUser) syncToCloud();
+    } catch(e) {}
   }
   function isInWatchlist(id, type) {
     return getWatchlist().some(i => i.id === id && i.type === type);
@@ -1256,6 +1473,7 @@
       });
       list = list.slice(0, 12);
       localStorage.setItem('sfv_continue', JSON.stringify(list));
+      if (_currentUser) syncToCloud();
     } catch(e) {}
   }
   // Atualiza só o progresso de uma entrada já existente (chamado a cada timeupdate do <video>),
@@ -2360,10 +2578,173 @@
   }
 
   // ══════════════════════════════════════
+  // AUTH – GOOGLE LOGIN (SUPABASE OAUTH)
+  // ══════════════════════════════════════
+  let _currentUser = null;
+
+  function openAuthModal() {
+    document.getElementById('authModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeAuthModal() {
+    document.getElementById('authModal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  async function doGoogleLogin() {
+    if (!db) { showToast('⚠️ Supabase não configurado'); return; }
+    try {
+      const { error } = await db.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin + window.location.pathname
+        }
+      });
+      if (error) throw error;
+    } catch(e) {
+      console.error('Login error:', e);
+      showToast('❌ Erro ao fazer login. Tente novamente.');
+    }
+  }
+
+  async function doSignOut() {
+    if (!db) return;
+    toggleUserDropdown(false);
+    await db.auth.signOut();
+    _currentUser = null;
+    updateAuthUI(null);
+    showToast('👋 Saiu da conta');
+  }
+
+  function toggleUserDropdown(force) {
+    const dd = document.getElementById('userDropdown');
+    if (force === false) { dd.classList.remove('open'); return; }
+    dd.classList.toggle('open');
+  }
+
+  // Close dropdown on outside click
+  document.addEventListener('click', e => {
+    const wrap = document.getElementById('userMenuWrap');
+    if (wrap && !wrap.contains(e.target)) {
+      document.getElementById('userDropdown')?.classList.remove('open');
+    }
+  });
+
+  function updateAuthUI(user) {
+    const loginBtn   = document.getElementById('navLoginBtn');
+    const userWrap   = document.getElementById('userMenuWrap');
+    const avatarEl   = document.getElementById('userAvatarEl');
+    const initEl     = document.getElementById('userAvatarInitial');
+    const nameShort  = document.getElementById('userNameShort');
+    const ddName     = document.getElementById('ddUserName');
+    const ddEmail    = document.getElementById('ddUserEmail');
+
+    if (user) {
+      loginBtn.style.display = 'none';
+      userWrap.style.display = 'flex';
+
+      const name  = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Usuário';
+      const email = user.email || '';
+      const avatar = user.user_metadata?.avatar_url || '';
+
+      ddName.textContent = name;
+      ddEmail.textContent = email;
+      nameShort.textContent = name.split(' ')[0];
+
+      if (avatar) {
+        avatarEl.innerHTML = `<img src="${avatar}" alt="${name}" onerror="this.parentElement.innerHTML='<span>${name[0].toUpperCase()}</span>'" />`;
+      } else {
+        avatarEl.innerHTML = `<span>${name[0].toUpperCase()}</span>`;
+      }
+      initEl && (initEl.textContent = name[0].toUpperCase());
+    } else {
+      loginBtn.style.display = 'flex';
+      userWrap.style.display = 'none';
+    }
+  }
+
+  // ── CLOUD SYNC (Supabase) ──
+  // Salva watchlist e histórico na tabela user_data do Supabase
+  // Schema esperado: user_data(user_id text PK, watchlist jsonb, continue_list jsonb)
+  // Crie via Supabase SQL Editor:
+  //   create table if not exists user_data (
+  //     user_id text primary key,
+  //     watchlist jsonb default '[]',
+  //     continue_list jsonb default '[]',
+  //     updated_at timestamptz default now()
+  //   );
+  //   alter table user_data enable row level security;
+  //   create policy "owner" on user_data for all using (auth.uid()::text = user_id);
+
+  async function syncToCloud() {
+    if (!db || !_currentUser) return;
+    try {
+      const watchlist = getWatchlist();
+      const continueList = getContinueList();
+      await db.from('user_data').upsert({
+        user_id: _currentUser.id,
+        watchlist,
+        continue_list: continueList,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'user_id' });
+    } catch(e) { console.warn('syncToCloud error:', e); }
+  }
+
+  async function syncFromCloud() {
+    if (!db || !_currentUser) { showToast('⚠️ Faça login para sincronizar'); return; }
+    try {
+      const { data, error } = await db.from('user_data')
+        .select('watchlist,continue_list')
+        .eq('user_id', _currentUser.id)
+        .single();
+      if (error || !data) { showToast('☁️ Nenhum dado na nuvem ainda'); return; }
+      if (data.watchlist?.length)    saveWatchlist(data.watchlist);
+      if (data.continue_list?.length) localStorage.setItem('sfv_continue', JSON.stringify(data.continue_list));
+      showToast('✅ Dados sincronizados!');
+      renderContinueRow();
+      renderWatchlistPage();
+    } catch(e) {
+      console.warn('syncFromCloud error:', e);
+      showToast('❌ Erro ao sincronizar');
+    }
+  }
+
+  // Patch watchlist toggle to also sync
+  const _origToggleWatchlist = toggleWatchlist;
+  // Re-wrap after definition further below — see initAuth
+
+  async function initAuth() {
+    if (!db) return;
+    // Handle OAuth redirect
+    const { data: { session } } = await db.auth.getSession();
+    if (session?.user) {
+      _currentUser = session.user;
+      updateAuthUI(_currentUser);
+      closeAuthModal();
+      // Load cloud data on login
+      await syncFromCloud();
+    }
+
+    db.auth.onAuthStateChange(async (event, session) => {
+      _currentUser = session?.user || null;
+      updateAuthUI(_currentUser);
+      if (event === 'SIGNED_IN') {
+        closeAuthModal();
+        showToast('✅ Login realizado com sucesso!');
+        await syncFromCloud();
+      }
+      if (event === 'SIGNED_OUT') {
+        updateAuthUI(null);
+      }
+    });
+  }
+
+  // ══════════════════════════════════════
   // INIT
   // ══════════════════════════════════════
   async function init() {
     initApkBanner();
+    await initAuth();
 
     // ── Deep link via query string (?id=123&type=movie) ──
     // Resolve o problema do Telegram/Chrome que corta o # ao abrir links externos
