@@ -24,33 +24,10 @@
       ]
     },
     {
-      "source": "/icons/(.*)",
+      "source": "/icons/:file*",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=2592000, immutable" }
       ]
-    },
-    {
-      "source": "/screenshots/(.*)",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=2592000, immutable" }
-      ]
-    }
-  ],
-  "redirects": [
-    {
-      "source": "http://streamflixvip.online/(.*)",
-      "destination": "https://streamflixvip.online/$1",
-      "permanent": true
-    },
-    {
-      "source": "http://www.streamflixvip.online/(.*)",
-      "destination": "https://streamflixvip.online/$1",
-      "permanent": true
-    },
-    {
-      "source": "https://www.streamflixvip.online/(.*)",
-      "destination": "https://streamflixvip.online/$1",
-      "permanent": true
     }
   ]
 }
