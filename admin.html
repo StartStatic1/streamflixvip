@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin — StreamFlixVIP</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #08080f;
+      --surface:  #111119;
+      --surface2: #1a1a26;
+      --border:   rgba(255,255,255,0.08);
+      --text:     #f0f0f8;
+      --muted:    #8888aa;
+      --gold:     #f5c518;
+      --gold2:    #e6a800;
+      --green:    #22c55e;
+      --red:      #ef4444;
+      --accent:   #7c3aed;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+    }
+
+    /* ── LOGIN ── */
+    #loginScreen {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      gap: 32px;
+    }
+    .login-logo {
+      font-size: 1.6rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .login-logo em { font-style: italic; color: var(--gold); }
+    .login-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 36px 28px;
+      width: 100%;
+      max-width: 360px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      align-items: center;
+    }
+    .login-badge {
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
+      color: #000;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      border-radius: 100px;
+    }
+    .login-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      text-align: center;
+    }
+    .login-sub {
+      font-size: 0.85rem;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.5;
+    }
+    .btn-google {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 13px 20px;
+      background: #fff;
+      color: #111;
+      border: none;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .2s;
+      font-family: 'Outfit', sans-serif;
+    }
+    .btn-google:hover { opacity: .88; }
+    .btn-google:active { opacity: .75; }
+
+    /* ── APP ── */
+    #appScreen { display: none; }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(8,8,15,0.92);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .header-logo { font-size: 1.1rem; font-weight: 800; }
+    .header-logo em { font-style: italic; color: var(--gold); }
+    .header-badge {
+      background: rgba(245,197,24,0.15);
+      border: 1px solid var(--gold);
+      color: var(--gold);
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 100px;
+    }
+    .header-right { display: flex; align-items: center; gap: 10px; }
+    .user-info { font-size: 0.8rem; color: var(--muted); display: none; }
+    @media(min-width:480px){ .user-info { display: block; } }
+    .btn-signout {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: 'Outfit', sans-serif;
+      transition: color .2s;
+    }
+    .btn-signout:hover { color: var(--text); }
+
+    main {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 24px 16px 48px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* ── STATS ROW ── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .stat-value {
+      font-size: 1.8rem;
+      font-weight: 800;
+      line-height: 1;
+    }
+    .stat-value.gold { color: var(--gold); }
+    .stat-value.green { color: var(--green); }
+    .stat-value.red { color: var(--red); }
+    .stat-label { font-size: 0.75rem; color: var(--muted); font-weight: 500; }
+
+    /* ── CARD ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 20px;
+    }
+    .card-title {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-title span {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--muted);
+      background: var(--surface2);
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+
+    /* ── GERADOR ── */
+    .gen-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media(max-width:480px){ .gen-grid { grid-template-columns: 1fr; } }
+
+    label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--muted);
+      display: block;
+      margin-bottom: 6px;
+    }
+    select, input[type="number"], input[type="text"] {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      padding: 10px 14px;
+      font-size: 0.9rem;
+      font-family: 'Outfit', sans-serif;
+      outline: none;
+      transition: border-color .2s;
+    }
+    select:focus, input:focus { border-color: var(--gold); }
+
+    .prefix-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .prefix-row input { flex: 1; }
+    .prefix-hint {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
+      color: #000;
+      border: none;
+      border-radius: 12px;
+      padding: 12px 24px;
+      font-size: 0.92rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Outfit', sans-serif;
+      transition: opacity .2s, transform .15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-primary:hover { opacity: .88; }
+    .btn-primary:active { transform: scale(0.97); }
+    .btn-primary:disabled { opacity: .45; cursor: not-allowed; }
+
+    /* ── RESULTADO GERAÇÃO ── */
+    #genResult { display: none; }
+    .gen-result-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .gen-result-title { font-size: 0.9rem; font-weight: 700; color: var(--green); }
+    .btn-copy-all {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 7px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: 'Outfit', sans-serif;
+      transition: border-color .2s;
+    }
+    .btn-copy-all:hover { border-color: var(--gold); }
+    .codes-textarea {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      padding: 12px;
+      font-size: 0.82rem;
+      font-family: 'Courier New', monospace;
+      resize: vertical;
+      min-height: 120px;
+      outline: none;
+    }
+
+    /* ── FILTROS LISTA ── */
+    .filter-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .filter-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 100px;
+      cursor: pointer;
+      font-family: 'Outfit', sans-serif;
+      transition: all .2s;
+    }
+    .filter-btn.active {
+      background: var(--gold);
+      border-color: var(--gold);
+      color: #000;
+    }
+    .search-input {
+      flex: 1;
+      min-width: 160px;
+    }
+
+    /* ── TABELA ── */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+    th {
+      text-align: left;
+      padding: 8px 12px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: .8px;
+      text-transform: uppercase;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      vertical-align: middle;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+
+    .code-cell {
+      font-family: 'Courier New', monospace;
+      font-weight: 700;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .copy-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 2px 4px;
+      border-radius: 4px;
+      transition: color .15s;
+      flex-shrink: 0;
+    }
+    .copy-btn:hover { color: var(--gold); }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+    .badge-green { background: rgba(34,197,94,0.15); color: var(--green); }
+    .badge-gold  { background: rgba(245,197,24,0.15); color: var(--gold); }
+    .badge-red   { background: rgba(239,68,68,0.15);  color: var(--red); }
+    .badge-gray  { background: rgba(136,136,170,0.12); color: var(--muted); }
+
+    .action-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: 'Outfit', sans-serif;
+      transition: all .2s;
+    }
+    .action-btn:hover { border-color: var(--red); color: var(--red); }
+    .action-btn.reactivate:hover { border-color: var(--green); color: var(--green); }
+
+    .empty-state {
+      text-align: center;
+      padding: 32px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 32px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    /* toast */
+    #toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .25s, transform .25s;
+      z-index: 999;
+      white-space: nowrap;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+<!-- ── LOGIN ── -->
+<div id="loginScreen">
+  <div class="login-logo">Stream<em>Flix</em>VIP</div>
+  <div class="login-card">
+    <div class="login-badge">⚙️ Admin</div>
+    <div class="login-title">Painel de Administração</div>
+    <div class="login-sub">Acesso restrito. Entre com o Google para continuar.</div>
+    <button class="btn-google" onclick="doLogin()">
+      <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.08 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-3.59-13.46-8.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+      Continuar com Google
+    </button>
+  </div>
+</div>
+
+<!-- ── APP ── -->
+<div id="appScreen">
+  <header>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="header-logo">Stream<em>Flix</em>VIP</div>
+      <div class="header-badge">Admin</div>
+    </div>
+    <div class="header-right">
+      <div class="user-info" id="userEmail"></div>
+      <button class="btn-signout" onclick="doSignOut()">Sair</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-value gold" id="statTotal">—</div>
+        <div class="stat-label">Total de códigos</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value green" id="statAvailable">—</div>
+        <div class="stat-label">Disponíveis</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value red" id="statUsed">—</div>
+        <div class="stat-label">Utilizados</div>
+      </div>
+    </div>
+
+    <!-- Gerador -->
+    <div class="card">
+      <div class="card-title">🎟️ Gerar códigos VIP</div>
+      <div class="gen-grid">
+        <div>
+          <label>Plano</label>
+          <select id="genPlan" onchange="onPlanChange()">
+            <option value="720">30 dias — R$5,99</option>
+            <option value="876000">Vitalício — R$49,90</option>
+            <option value="1">Teste 1 hora</option>
+            <option value="custom">Personalizado...</option>
+          </select>
+        </div>
+        <div>
+          <label>Quantidade</label>
+          <input type="number" id="genQty" value="1" min="1" max="500"/>
+        </div>
+        <div id="customDurationWrap" style="display:none">
+          <label>Horas personalizadas</label>
+          <input type="number" id="genCustomHours" value="48" min="1"/>
+        </div>
+        <div>
+          <label>Prefixo (opcional)</label>
+          <input type="text" id="genPrefix" placeholder="ex: JULHO, AMIGO" maxlength="12"/>
+          <div class="prefix-hint">Código final: JULHO-A3F2K1</div>
+        </div>
+      </div>
+      <div style="margin-top:16px">
+        <button class="btn-primary" onclick="gerarCodigos()" id="btnGerar">
+          ✨ Gerar
+        </button>
+      </div>
+
+      <!-- Resultado -->
+      <div id="genResult" style="margin-top:20px">
+        <div class="gen-result-header">
+          <div class="gen-result-title" id="genResultTitle"></div>
+          <button class="btn-copy-all" onclick="copyAll()">📋 Copiar todos</button>
+        </div>
+        <textarea class="codes-textarea" id="codesTextarea" readonly></textarea>
+      </div>
+    </div>
+
+    <!-- Lista -->
+    <div class="card">
+      <div class="card-title">📋 Códigos <span id="listCount">0</span></div>
+      <div class="filter-row">
+        <button class="filter-btn active" onclick="setFilter('todos', this)">Todos</button>
+        <button class="filter-btn" onclick="setFilter('disponivel', this)">Disponíveis</button>
+        <button class="filter-btn" onclick="setFilter('usado', this)">Usados</button>
+        <button class="filter-btn" onclick="setFilter('inativo', this)">Inativos</button>
+        <input type="text" class="search-input" placeholder="Buscar código..." oninput="renderTable()" id="searchInput"/>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Plano</th>
+              <th>Status</th>
+              <th>Criado</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="codesTableBody">
+            <tr><td colspan="5" class="loading">Carregando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  const SUPABASE_URL  = 'https://gkujbjpvphuvrejpvvtz.supabase.co';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdWpianB2cGh1dnJlanB2dnR6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2OTQ2OTMsImV4cCI6MjA5NDI3MDY5M30.Zoqdn0V6SZOAfhz9kK9NgG6lniJdyVqihLsNT-O8Huw';
+  const ADMIN_EMAIL   = 'xfdapx@gmail.com';
+
+  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+  let _session = null;
+  let _allCodes = [];
+  let _filter   = 'todos';
+
+  // ── AUTH ──
+  db.auth.onAuthStateChange(async (event, session) => {
+    _session = session;
+    if (session?.user) {
+      if (session.user.email !== ADMIN_EMAIL) {
+        await db.auth.signOut();
+        showToast('❌ Acesso negado para este email');
+        return;
+      }
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('appScreen').style.display   = 'block';
+      document.getElementById('userEmail').textContent = session.user.email;
+      loadCodes();
+    } else {
+      document.getElementById('loginScreen').style.display = 'flex';
+      document.getElementById('appScreen').style.display   = 'none';
+    }
+  });
+
+  async function doLogin() {
+    await db.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.href }
+    });
+  }
+
+  async function doSignOut() {
+    await db.auth.signOut();
+  }
+
+  // ── API CALL ──
+  async function api(action, extra = {}) {
+    const token = _session?.access_token;
+    const res = await fetch('/api/admin-vip', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ action, ...extra })
+    });
+    return res.json();
+  }
+
+  // ── LOAD ──
+  async function loadCodes() {
+    const data = await api('list');
+    _allCodes = data.codes || [];
+    updateStats();
+    renderTable();
+  }
+
+  function updateStats() {
+    const total     = _allCodes.length;
+    const used      = _allCodes.filter(c => c.used_by).length;
+    const available = _allCodes.filter(c => !c.used_by && c.is_active).length;
+    document.getElementById('statTotal').textContent     = total;
+    document.getElementById('statAvailable').textContent = available;
+    document.getElementById('statUsed').textContent      = used;
+  }
+
+  // ── FILTRO ──
+  function setFilter(f, el) {
+    _filter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    renderTable();
+  }
+
+  function renderTable() {
+    const search = (document.getElementById('searchInput')?.value || '').toLowerCase();
+    let rows = _allCodes;
+
+    if (_filter === 'disponivel') rows = rows.filter(c => !c.used_by && c.is_active);
+    if (_filter === 'usado')      rows = rows.filter(c => c.used_by);
+    if (_filter === 'inativo')    rows = rows.filter(c => !c.is_active);
+    if (search) rows = rows.filter(c => c.code.toLowerCase().includes(search));
+
+    document.getElementById('listCount').textContent = rows.length;
+    const tbody = document.getElementById('codesTableBody');
+
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Nenhum código encontrado</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = rows.map(c => {
+      const isUsed     = !!c.used_by;
+      const isInactive = !c.is_active;
+      let badge = '';
+      if (isInactive) badge = '<span class="badge badge-gray">Inativo</span>';
+      else if (isUsed) badge = '<span class="badge badge-red">Usado</span>';
+      else             badge = '<span class="badge badge-green">Disponível</span>';
+
+      const plan = c.plan_label || hoursToLabel(c.duration_hours);
+      const date = c.created_at ? new Date(c.created_at).toLocaleDateString('pt-BR') : '—';
+
+      const actionBtn = isInactive
+        ? `<button class="action-btn reactivate" onclick="toggleCode('${c.code}', true)">Reativar</button>`
+        : (!isUsed ? `<button class="action-btn" onclick="toggleCode('${c.code}', false)">Desativar</button>` : '');
+
+      return `<tr>
+        <td>
+          <div class="code-cell">
+            ${c.code}
+            <button class="copy-btn" onclick="copyCode('${c.code}')" title="Copiar">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            </button>
+          </div>
+        </td>
+        <td style="color:var(--muted)">${plan}</td>
+        <td>${badge}</td>
+        <td style="color:var(--muted)">${date}</td>
+        <td>${actionBtn}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  function hoursToLabel(h) {
+    if (!h) return '—';
+    if (h >= 876000) return 'Vitalício';
+    if (h >= 720)    return `${Math.round(h/720)} mês(es)`;
+    if (h >= 24)     return `${Math.round(h/24)} dia(s)`;
+    return `${h}h`;
+  }
+
+  // ── AÇÕES ──
+  async function toggleCode(code, activate) {
+    const action = activate ? 'reactivate' : 'deactivate';
+    await api(action, { code });
+    showToast(activate ? '✅ Código reativado' : '🚫 Código desativado');
+    loadCodes();
+  }
+
+  function copyCode(code) {
+    navigator.clipboard.writeText(code).then(() => showToast('📋 Copiado!'));
+  }
+
+  function copyAll() {
+    const ta = document.getElementById('codesTextarea');
+    navigator.clipboard.writeText(ta.value).then(() => showToast('📋 Todos copiados!'));
+  }
+
+  // ── GERADOR ──
+  function onPlanChange() {
+    const v = document.getElementById('genPlan').value;
+    document.getElementById('customDurationWrap').style.display = v === 'custom' ? 'block' : 'none';
+  }
+
+  function randSuffix(len = 6) {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let s = '';
+    for (let i = 0; i < len; i++) s += chars[Math.floor(Math.random() * chars.length)];
+    return s;
+  }
+
+  async function gerarCodigos() {
+    const planVal  = document.getElementById('genPlan').value;
+    const qty      = Math.min(500, Math.max(1, parseInt(document.getElementById('genQty').value) || 1));
+    const prefix   = (document.getElementById('genPrefix').value || '').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
+    const hours    = planVal === 'custom'
+      ? parseInt(document.getElementById('genCustomHours').value) || 48
+      : parseInt(planVal);
+    const planLabel = planVal === '720' ? '30 dias' : planVal === '876000' ? 'Vitalício' : planVal === '1' ? 'Teste 1h' : `${hours}h`;
+
+    const btn = document.getElementById('btnGerar');
+    btn.disabled = true;
+    btn.textContent = 'Gerando...';
+
+    // Gerar códigos únicos localmente
+    const existingCodes = new Set(_allCodes.map(c => c.code));
+    const newCodes = [];
+    let attempts = 0;
+    while (newCodes.length < qty && attempts < qty * 10) {
+      attempts++;
+      const suffix = randSuffix(6);
+      const code   = prefix ? `${prefix}-${suffix}` : `VIP-${suffix}`;
+      if (!existingCodes.has(code)) {
+        existingCodes.add(code);
+        newCodes.push({ code, duration_hours: hours, plan_label: planLabel });
+      }
+    }
+
+    const result = await api('create', { codes: newCodes });
+
+    btn.disabled = false;
+    btn.textContent = '✨ Gerar';
+
+    if (result.error) {
+      showToast('❌ Erro: ' + result.error);
+      return;
+    }
+
+    const created = result.created || newCodes;
+    document.getElementById('genResult').style.display = 'block';
+    document.getElementById('genResultTitle').textContent = `✅ ${created.length} código(s) criado(s)`;
+    document.getElementById('codesTextarea').value = created.map(c => c.code).join('\n');
+
+    showToast(`✅ ${created.length} código(s) gerado(s)!`);
+    loadCodes();
+  }
+
+  // ── TOAST ──
+  let _toastTimer;
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+  }
+</script>
+</body>
+</html>
