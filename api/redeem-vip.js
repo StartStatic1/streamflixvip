@@ -131,6 +131,26 @@ module.exports = async function handler(req, res) {
       return;
     }
 
+    // 5) Log no histórico de resgates (vip_redemptions) — não bloqueia a
+    //    resposta nem desfaz o que já foi feito acima; é só telemetria
+    //    pro super painel mostrar o histórico completo de cada usuário.
+    try {
+      await fetch(`${SUPABASE_URL}/rest/v1/vip_redemptions`, {
+        method: 'POST',
+        headers: { ...headers, 'Prefer': 'return=minimal' },
+        body: JSON.stringify({
+          user_id: userId,
+          email: currentStatus?.email || null,
+          code,
+          plan_label: vipCode.plan_label || null,
+          duration_hours: durationHours,
+          redeemed_at: now.toISOString(),
+        }),
+      });
+    } catch (logErr) {
+      console.warn('vip_redemptions log error (non-fatal):', logErr);
+    }
+
     res.status(200).json({
       success: true,
       expiresAt: newExpiry.toISOString(),
