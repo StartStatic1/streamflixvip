@@ -15,6 +15,7 @@
 const ALLOWED_HOSTS = [
   'unitvlite.xyz',
   'sventank.com',
+  'cdnbr02.com', 
   // adicione aqui os domínios dos seus outros provedores Xtream
 ];
 
