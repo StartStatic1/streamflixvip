@@ -62,10 +62,37 @@ export default async function handler(req, res) {
     res.setHeader('Cache-Control', 'public, max-age=3600');
     res.setHeader('Access-Control-Allow-Origin', '*');
 
-    const buffer = Buffer.from(await upstream.arrayBuffer());
-    res.send(buffer);
+    // IMPORTANTE: repassa o corpo em stream (pipe), sem baixar o arquivo
+    // inteiro pra memória antes de responder. Com arrayBuffer() o vídeo
+    // inteiro (pode passar de 1-2GB) precisa terminar de baixar do servidor
+    // de origem ANTES do navegador receber o primeiro byte — isso estoura
+    // o tempo máximo de execução da function (10s no plano Hobby da Vercel)
+    // e o limite de memória, e o player fica girando pra sempre. Streaming
+    // manda os bytes pro navegador conforme chegam da origem.
+    if (upstream.body) {
+      const reader = upstream.body.getReader();
+      req.on('close', () => reader.cancel().catch(() => {}));
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const ok = res.write(Buffer.from(value));
+          if (!ok) await new Promise(resolve => res.once('drain', resolve));
+        }
+      } finally {
+        res.end();
+      }
+    } else {
+      // fallback (ambiente sem suporte a stream do fetch): buffer completo
+      const buffer = Buffer.from(await upstream.arrayBuffer());
+      res.send(buffer);
+    }
   } catch (e) {
-    res.status(502).json({ error: 'Falha ao buscar o vídeo de origem: ' + e.message });
+    if (!res.headersSent) {
+      res.status(502).json({ error: 'Falha ao buscar o vídeo de origem: ' + e.message });
+    } else {
+      res.end();
+    }
   }
 }
 
