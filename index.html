@@ -1270,6 +1270,10 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
           Sincronizar Dados
         </button>
+        <button class="user-dropdown-item" id="ddAdminItem" style="display:none" onclick="window.location.href='/admin.html'">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33h0a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51h0a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v0a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+          Painel Admin
+        </button>
         <button class="user-dropdown-item danger" onclick="doSignOut()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
           Sair
@@ -1473,6 +1477,10 @@
     <button class="mobile-sheet-btn" id="sheetVipItem" onclick="openVipModal();closeMobileProfileSheet()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19h14M5 19l-1-9 4 3 4-6 4 6 4-3-1 9"/></svg>
       <span id="sheetVipItemLabel">Seja VIP</span>
+    </button>
+    <button class="mobile-sheet-btn" id="sheetAdminItem" style="display:none" onclick="window.location.href='/admin.html'">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33h0a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51h0a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v0a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      Painel Admin
     </button>
     <button class="mobile-sheet-btn danger" onclick="doSignOut();closeMobileProfileSheet()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
@@ -2966,9 +2974,16 @@
       // reabre o app de fato quando o link de retorno usa o scheme próprio
       // do app (registrado como deep link). No navegador normal, mantemos a
       // URL https:// de sempre.
-      const redirectTo = isWebView()
-        ? APP_AUTH_SCHEME
-        : window.location.origin + window.location.pathname;
+      //
+      // Forçamos sempre o host www.: streamflixvip.online (sem www) tem um
+      // redirect 308 configurado na Vercel apontando para o www., e qualquer
+      // redirect feito pelo servidor (antes do JS rodar) descarta o
+      // fragmento "#access_token=..." que o Supabase anexa na volta do
+      // login. Começando o login já em www., o navegador nunca passa por
+      // esse 308 no meio do caminho, então o token chega intacto.
+      const httpsRedirect = (window.location.origin + window.location.pathname)
+        .replace('https://streamflixvip.online', 'https://www.streamflixvip.online');
+      const redirectTo = isWebView() ? APP_AUTH_SCHEME : httpsRedirect;
 
       const { error } = await db.auth.signInWithOAuth({
         provider: 'google',
@@ -3318,6 +3333,7 @@
       // Load cloud data on login
       await syncFromCloud();
       await refreshVipStatus();
+      checkIsAdmin();
     }
 
     db.auth.onAuthStateChange(async (event, session) => {
@@ -3335,13 +3351,50 @@
         trackLogin(_currentUser);
         await syncFromCloud();
         await refreshVipStatus();
+        checkIsAdmin();
       }
       if (event === 'SIGNED_OUT') {
         updateAuthUI(null);
         _vipStatus = { isVip: false, expiresAt: null, planLabel: null };
         updateVipUI();
+        setAdminButtonsVisible(false);
       }
     });
+  }
+
+  // Checa, sem travar nenhuma outra parte do fluxo de login, se a conta que
+  // acabou de entrar no SITE também está cadastrada como admin do painel
+  // (tabela vip_panel_admins). Se estiver, revela o atalho "Painel Admin" no
+  // menu — isso existe como rede de segurança para quando o redirect OAuth
+  // do próprio /admin.html não estiver configurado corretamente no Supabase
+  // (Authentication > URL Configuration > Redirect URLs precisa incluir
+  // a URL exata https://streamflixvip.online/admin.html, ou o Supabase
+  // ignora o redirectTo e manda sempre para o Site URL padrão = este site).
+  async function checkIsAdmin() {
+    if (!_currentUser || !db) { setAdminButtonsVisible(false); return; }
+    try {
+      const { data: { session } } = await db.auth.getSession();
+      const token = session?.access_token;
+      if (!token) { setAdminButtonsVisible(false); return; }
+      const res = await fetch('/api/admin-vip', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ action: 'list' }),
+      });
+      setAdminButtonsVisible(res.ok);
+    } catch (e) {
+      setAdminButtonsVisible(false);
+    }
+  }
+
+  function setAdminButtonsVisible(visible) {
+    const dd = document.getElementById('ddAdminItem');
+    const sheet = document.getElementById('sheetAdminItem');
+    if (dd) dd.style.display = visible ? 'flex' : 'none';
+    if (sheet) sheet.style.display = visible ? 'flex' : 'none';
   }
 
   // Registra/atualiza o perfil do usuário (email, nome, datas de login)

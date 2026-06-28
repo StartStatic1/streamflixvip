@@ -822,9 +822,19 @@
   });
 
   async function doLogin() {
+    // Força sempre o host www. no redirect: streamflixvip.online (sem www)
+    // tem um redirect 308 configurado na Vercel apontando para o www., e
+    // qualquer redirect feito pelo servidor (antes do JS rodar) descarta o
+    // fragmento "#access_token=..." que o Supabase anexa na volta do login.
+    // Começando o login já em www., o navegador nunca passa por esse 308
+    // no meio do caminho, então o token chega intacto.
+    const canonicalUrl = window.location.href.replace(
+      'https://streamflixvip.online',
+      'https://www.streamflixvip.online'
+    );
     await db.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.href }
+      options: { redirectTo: canonicalUrl }
     });
   }
 
