@@ -435,6 +435,100 @@
       white-space: nowrap;
     }
     #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ── TABS DO PAINEL ── */
+    .panel-tabs {
+      display: flex; gap: 8px; padding: 14px 24px 0;
+      overflow-x: auto; border-bottom: 1px solid var(--border);
+    }
+    .panel-tab {
+      background: none; border: none; color: var(--muted);
+      font-family: 'Outfit', sans-serif; font-size: 0.88rem; font-weight: 600;
+      padding: 10px 16px; cursor: pointer; white-space: nowrap;
+      border-bottom: 2px solid transparent; transition: all .2s;
+    }
+    .panel-tab:hover { color: var(--text); }
+    .panel-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+    .tab-panel { padding-top: 20px; }
+
+    /* ── ABA USUÁRIOS / FILMES: tabela compartilha estilo com .table-wrap já existente ── */
+    .table-wrap table th { text-align: left; }
+
+    /* ── BUSCA TMDB (aba Filmes) ── */
+    .search-box { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .search-box select {
+      background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+      font-family: 'Outfit', sans-serif; font-size: 0.86rem; padding: 11px 12px;
+      border-radius: 9px; outline: none; flex: 0 0 auto;
+    }
+    .search-box input {
+      flex: 1 1 200px; min-width: 0; background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text); font-family: 'Outfit', sans-serif; font-size: 0.9rem;
+      padding: 11px 14px; border-radius: 9px; outline: none;
+    }
+    .search-box button {
+      background: var(--accent); border: none; color: #fff; font-family: 'Outfit', sans-serif;
+      font-weight: 700; font-size: 0.86rem; padding: 11px 18px; border-radius: 9px; cursor: pointer;
+      flex: 0 0 auto;
+    }
+
+    .results-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(120px,1fr)); gap: 11px;
+    }
+    .result-card {
+      background: var(--surface2); border: 1px solid var(--border); border-radius: 11px;
+      overflow: hidden; cursor: pointer; transition: all .2s;
+    }
+    .result-card:hover { border-color: var(--accent); }
+    .result-card img { width: 100%; aspect-ratio: 2/3; object-fit: cover; display: block; background: var(--surface); }
+    .result-card .ph { width: 100%; aspect-ratio: 2/3; display: flex; align-items: center; justify-content: center; font-size: 2rem; background: var(--surface); }
+    .result-card .info { padding: 8px 9px; }
+    .result-card .info .t { font-size: 0.78rem; font-weight: 600; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .result-card .info .y { font-size: 0.7rem; color: var(--muted); margin-top: 3px; }
+    .result-card .badge { display: inline-block; font-size: 0.6rem; font-weight: 700; padding: 2px 7px; border-radius: 5px; background: rgba(245,197,24,0.15); color: var(--gold); margin-top: 5px; }
+    .result-card .badge.has-sources { background: rgba(34,197,94,0.15); color: var(--green); }
+
+    /* ── GRUPOS DE TÍTULO (fontes cadastradas) ── */
+    .title-group { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
+    .title-group-head { display: flex; align-items: center; gap: 12px; padding: 12px 14px; cursor: pointer; }
+    .title-group-head:hover { background: rgba(255,255,255,0.03); }
+    .title-group-head img { width: 40px; height: 60px; object-fit: cover; border-radius: 6px; background: var(--surface); flex-shrink: 0; }
+    .title-group-head .ph { width: 40px; height: 60px; border-radius: 6px; background: var(--surface); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+    .title-group-info { flex: 1; min-width: 0; }
+    .title-group-info .name { font-size: 0.92rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .title-group-info .meta { font-size: 0.74rem; color: var(--muted); margin-top: 2px; }
+    .title-group-chevron { color: var(--muted); font-size: 0.9rem; transition: transform .2s; flex-shrink: 0; }
+    .title-group.open .title-group-chevron { transform: rotate(180deg); }
+    .title-group-body { display: none; border-top: 1px solid var(--border); }
+    .title-group.open .title-group-body { display: block; }
+    .title-group-add { display: block; width: 100%; text-align: left; background: none; border: none; color: var(--gold); font-family: 'Outfit', sans-serif; font-size: 0.8rem; font-weight: 600; padding: 11px 14px; cursor: pointer; border-top: 1px solid var(--border); }
+
+    .source-row { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+    .source-row:first-child { border-top: none; }
+    .source-row-main { flex: 1; min-width: 120px; }
+    .source-ep-tag { font-size: 0.72rem; font-weight: 700; color: var(--muted); min-width: 42px; }
+    .source-label-text { font-size: 0.84rem; font-weight: 600; }
+    .source-url-text { font-size: 0.72rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; display: block; }
+    .pill { display: inline-block; font-size: 0.66rem; font-weight: 700; padding: 3px 8px; border-radius: 6px; flex-shrink: 0; }
+    .pill.active { background: rgba(34,197,94,0.15); color: var(--green); }
+    .pill.inactive { background: rgba(136,136,170,0.15); color: var(--muted); }
+    .row-actions { display: flex; gap: 6px; flex-shrink: 0; width: 100%; justify-content: flex-end; }
+    .row-actions button { background: var(--surface); border: 1px solid var(--border); color: var(--muted); font-family: 'Outfit', sans-serif; font-size: 0.7rem; font-weight: 600; padding: 6px 9px; border-radius: 6px; cursor: pointer; }
+    .row-actions button:hover { color: var(--text); border-color: var(--accent); }
+    .row-actions button.danger:hover { color: var(--red); border-color: var(--red); }
+
+    /* ── MODAL: cadastrar/editar fonte de filme ── */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(4,4,8,0.92); z-index: 200; display: none; align-items: center; justify-content: center; padding: 18px; overflow-y: auto; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; padding: 24px; }
+    .modal-head { display: flex; gap: 14px; margin-bottom: 18px; align-items: flex-start; }
+    .modal label { display: block; font-size: 0.76rem; color: var(--muted); font-weight: 600; margin-bottom: 6px; margin-top: 14px; }
+    .modal input, .modal select { width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); font-family: 'Outfit', sans-serif; font-size: 0.88rem; padding: 11px 12px; border-radius: 8px; outline: none; }
+    #sourceUrlInput { font-size: 0.78rem; font-family: 'Courier New', monospace; }
+    @media (max-width: 640px) {
+      .panel-tabs { padding: 14px 14px 0; }
+      .search-box input { flex-basis: 140px; }
+    }
   </style>
 </head>
 <body>
@@ -466,7 +560,15 @@
     </div>
   </header>
 
+  <nav class="panel-tabs">
+    <button class="panel-tab active" data-tab="codes" onclick="switchTab('codes')">🎟️ Códigos VIP</button>
+    <button class="panel-tab" data-tab="users" onclick="switchTab('users')">👥 Usuários</button>
+    <button class="panel-tab" data-tab="movies" onclick="switchTab('movies')">🎬 Filmes &amp; Séries</button>
+  </nav>
+
   <main>
+    <!-- ════════════ ABA: CÓDIGOS VIP ════════════ -->
+    <section id="tab-codes" class="tab-panel">
     <!-- Stats -->
     <div class="stats-row">
       <div class="stat-card">
@@ -553,15 +655,136 @@
         </table>
       </div>
     </div>
+    </section>
+
+    <!-- ════════════ ABA: USUÁRIOS ════════════ -->
+    <section id="tab-users" class="tab-panel" style="display:none">
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-value gold" id="statUsersTotal">—</div>
+          <div class="stat-label">Total de usuários</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value green" id="statUsersVip">—</div>
+          <div class="stat-label">VIP ativo agora</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value red" id="statUsersFree">—</div>
+          <div class="stat-label">Sem plano (grátis)</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">👥 Usuários <span id="usersListCount">0</span></div>
+        <div class="filter-row">
+          <button class="filter-btn active" onclick="setUserFilter('todos', this)">Todos</button>
+          <button class="filter-btn" onclick="setUserFilter('vip', this)">VIP ativo</button>
+          <button class="filter-btn" onclick="setUserFilter('expirado', this)">Expirado</button>
+          <button class="filter-btn" onclick="setUserFilter('gratis', this)">Grátis</button>
+          <input type="text" class="search-input" placeholder="Buscar por email ou nome..." oninput="renderUsersTable()" id="userSearchInput"/>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Usuário</th>
+                <th>Status</th>
+                <th>Expira em</th>
+                <th>Último código</th>
+                <th>1º login</th>
+                <th>Último login</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="usersTableBody">
+              <tr><td colspan="7" class="loading">Carregando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════ ABA: FILMES & SÉRIES ════════════ -->
+    <section id="tab-movies" class="tab-panel" style="display:none">
+      <div class="search-box">
+        <select id="searchType">
+          <option value="movie">Filme</option>
+          <option value="tv">Série</option>
+        </select>
+        <input type="text" id="movieSearchInput" placeholder="Buscar título no TMDB..." />
+        <button onclick="doMovieSearch()">Buscar</button>
+      </div>
+      <div class="results-grid" id="resultsGrid"></div>
+
+      <div class="card" style="margin-top:24px">
+        <div class="card-title">🎬 Fontes cadastradas</div>
+        <input type="text" class="search-input" placeholder="Filtrar por título..." id="filterInput" oninput="renderGroupedSources()" style="margin-bottom:14px"/>
+        <div id="recentSourcesWrap"></div>
+      </div>
+    </section>
   </main>
+</div>
+
+<!-- ════════════ MODAL: cadastrar/editar fonte de filme/série ════════════ -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div style="display:flex;gap:12px;align-items:center;flex:1;min-width:0">
+        <img id="modalPoster" style="width:50px;height:75px;object-fit:cover;border-radius:8px;display:none" />
+        <div id="modalPosterPh" style="width:50px;height:75px;border-radius:8px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:1.3rem">🎬</div>
+        <div style="flex:1;min-width:0">
+          <div id="modalTitle" style="font-weight:700;font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+          <div id="modalSub" style="font-size:0.78rem;color:var(--muted)"></div>
+        </div>
+      </div>
+      <button onclick="closeMovieModal()" style="background:none;border:none;color:var(--muted);font-size:1.4rem;cursor:pointer;padding:4px 8px">×</button>
+    </div>
+
+    <div id="episodeFields" style="display:none">
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <div style="flex:1">
+          <label>Temporada</label>
+          <input type="number" id="seasonInput" min="1" value="1"/>
+        </div>
+        <div style="flex:1">
+          <label>Episódio</label>
+          <input type="number" id="episodeInput" min="1" value="1"/>
+        </div>
+      </div>
+    </div>
+
+    <label style="margin-top:14px">URL do player</label>
+    <input type="text" id="sourceUrlInput" placeholder="https://..." oninput="previewMovieUrl(this.value)"/>
+
+    <div id="urlPreviewBox" style="display:none;margin-top:10px">
+      <div id="urlTypePill" style="display:inline-block;font-size:0.75rem;font-weight:700;padding:4px 10px;border-radius:7px;margin-bottom:8px"></div>
+      <div id="urlPreviewFrame" style="width:100%;height:200px;background:#000;border-radius:8px;overflow:hidden"></div>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:14px">
+      <div style="flex:1">
+        <label>Nome do servidor</label>
+        <input type="text" id="sourceLabelInput" placeholder="ex: StreamFlix.Play"/>
+      </div>
+      <div style="flex:1">
+        <label>Prioridade</label>
+        <input type="number" id="sourcePriorityInput" value="10"/>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:20px">
+      <button class="btn-primary" id="saveSourceBtn" onclick="saveMovieSource()" style="flex:1">Salvar fonte</button>
+      <button class="btn-signout" id="deleteInlineBtn" onclick="deleteMovieSourceFromModal()" style="display:none">Excluir</button>
+    </div>
+  </div>
 </div>
 
 <div id="toast"></div>
 
+
 <script>
   const SUPABASE_URL  = 'https://gkujbjpvphuvrejpvvtz.supabase.co';
   const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdWpianB2cGh1dnJlanB2dnR6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2OTQ2OTMsImV4cCI6MjA5NDI3MDY5M30.Zoqdn0V6SZOAfhz9kK9NgG6lniJdyVqihLsNT-O8Huw';
-  const ADMIN_EMAIL   = 'xfdapx@gmail.com';
 
   const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
@@ -570,17 +793,27 @@
   let _filter   = 'todos';
 
   // ── AUTH ──
+  // Acesso ao painel é controlado pela tabela vip_panel_admins (mesma
+  // lista usada pelo cadastro de filmes/séries) — um único lugar pra
+  // autorizar quem pode administrar, em vez de um email fixo no código.
   db.auth.onAuthStateChange(async (event, session) => {
     _session = session;
     if (session?.user) {
-      if (session.user.email !== ADMIN_EMAIL) {
+      const { data: adminRow, error: adminErr } = await db
+        .from('vip_panel_admins')
+        .select('id, display_name, role')
+        .eq('id', session.user.id)
+        .maybeSingle();
+
+      if (adminErr || !adminRow) {
         await db.auth.signOut();
-        showToast('❌ Acesso negado para este email');
+        showToast('❌ Esta conta não está autorizada a acessar o painel');
         return;
       }
+
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('appScreen').style.display   = 'block';
-      document.getElementById('userEmail').textContent = session.user.email;
+      document.getElementById('userEmail').textContent = adminRow.display_name || session.user.email;
       loadCodes();
     } else {
       document.getElementById('loginScreen').style.display = 'flex';
@@ -769,6 +1002,475 @@
 
     showToast(`✅ ${created.length} código(s) gerado(s)!`);
     loadCodes();
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // TABS
+  // ════════════════════════════════════════════════════════════
+  let _moviesLoadedOnce = false;
+  function switchTab(tab) {
+    document.querySelectorAll('.panel-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+    document.querySelectorAll('.tab-panel').forEach(s => s.style.display = 'none');
+    document.getElementById('tab-' + tab).style.display = 'block';
+    if (tab === 'users') loadUsers();
+    if (tab === 'movies' && !_moviesLoadedOnce) {
+      _moviesLoadedOnce = true;
+      loadMovieSources();
+    }
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // ABA: USUÁRIOS
+  // ════════════════════════════════════════════════════════════
+  let _allUsers = [];
+  let _userFilter = 'todos';
+
+  async function loadUsers() {
+    const data = await api('list-users');
+    if (data.error) { showToast('❌ ' + data.error); return; }
+    _allUsers = data.users || [];
+    updateUserStats();
+    renderUsersTable();
+  }
+
+  function updateUserStats() {
+    const now = Date.now();
+    const total = _allUsers.length;
+    const vip   = _allUsers.filter(u => u.expires_at && new Date(u.expires_at).getTime() > now).length;
+    const free  = total - vip;
+    document.getElementById('statUsersTotal').textContent = total;
+    document.getElementById('statUsersVip').textContent   = vip;
+    document.getElementById('statUsersFree').textContent  = free;
+  }
+
+  function setUserFilter(f, el) {
+    _userFilter = f;
+    document.querySelectorAll('#tab-users .filter-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    renderUsersTable();
+  }
+
+  // Formata o tempo restante até expires_at de forma legível (ex: "2d 4h",
+  // "0h 38min"). Recalculado sempre que a tabela é renderizada (ao abrir a
+  // aba ou recarregar) — sem relógio ao vivo, como definido no projeto.
+  function formatCountdown(expiresAt) {
+    if (!expiresAt) return null;
+    const diffMs = new Date(expiresAt).getTime() - Date.now();
+    if (diffMs <= 0) return null;
+    const totalMinutes = Math.floor(diffMs / 60000);
+    const days  = Math.floor(totalMinutes / 1440);
+    const hours = Math.floor((totalMinutes % 1440) / 60);
+    const mins  = totalMinutes % 60;
+    if (days > 0)  return `${days}d ${hours}h`;
+    if (hours > 0) return `${hours}h ${mins}min`;
+    return `${mins}min`;
+  }
+
+  function userStatusInfo(u) {
+    if (!u.expires_at) return { label: 'Grátis', cls: 'badge-gray' };
+    const isActive = new Date(u.expires_at).getTime() > Date.now();
+    return isActive
+      ? { label: 'VIP ativo', cls: 'badge-green' }
+      : { label: 'Expirado', cls: 'badge-red' };
+  }
+
+  function renderUsersTable() {
+    const search = (document.getElementById('userSearchInput')?.value || '').toLowerCase();
+    let rows = _allUsers;
+    const now = Date.now();
+
+    if (_userFilter === 'vip')      rows = rows.filter(u => u.expires_at && new Date(u.expires_at).getTime() > now);
+    if (_userFilter === 'expirado') rows = rows.filter(u => u.expires_at && new Date(u.expires_at).getTime() <= now);
+    if (_userFilter === 'gratis')   rows = rows.filter(u => !u.expires_at);
+    if (search) rows = rows.filter(u =>
+      (u.email || '').toLowerCase().includes(search) || (u.name || '').toLowerCase().includes(search)
+    );
+
+    document.getElementById('usersListCount').textContent = rows.length;
+    const tbody = document.getElementById('usersTableBody');
+
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Nenhum usuário encontrado</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = rows.map(u => {
+      const status = userStatusInfo(u);
+      const countdown = formatCountdown(u.expires_at);
+      const expiresText = u.expires_at
+        ? (countdown ? `⏳ ${countdown}` : new Date(u.expires_at).toLocaleDateString('pt-BR'))
+        : '—';
+      const firstLogin = u.first_login_at ? new Date(u.first_login_at).toLocaleDateString('pt-BR') : '—';
+      const lastLogin   = u.last_login_at  ? new Date(u.last_login_at).toLocaleDateString('pt-BR')  : '—';
+      return `
+        <tr>
+          <td>
+            <div style="font-weight:600">${u.name || '(sem nome)'}</div>
+            <div style="font-size:0.76rem;color:var(--muted)">${u.email || '—'}</div>
+          </td>
+          <td><span class="badge ${status.cls}">${status.label}</span></td>
+          <td>${expiresText}</td>
+          <td style="font-size:0.78rem">${u.last_code_used || '—'}</td>
+          <td style="font-size:0.78rem">${firstLogin}</td>
+          <td style="font-size:0.78rem">${lastLogin}</td>
+          <td><button class="btn-signout" style="padding:6px 10px;font-size:0.75rem" onclick="viewUserHistory('${u.user_id}', '${(u.email||'').replace(/'/g,"")}')">Histórico</button></td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  async function viewUserHistory(userId, email) {
+    const data = await api('list-redemptions', { userId });
+    if (data.error) { showToast('❌ ' + data.error); return; }
+    const items = data.redemptions || [];
+    if (!items.length) { showToast(`Sem histórico de códigos pra ${email || 'esse usuário'}.`); return; }
+    const lines = items.map(r =>
+      `${r.code} — ${r.plan_label || r.duration_hours + 'h'} — ${new Date(r.redeemed_at).toLocaleString('pt-BR')}`
+    );
+    alert(`Histórico de códigos — ${email || userId}\n\n` + lines.join('\n'));
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // ABA: FILMES & SÉRIES (migrado do painel separado)
+  // ════════════════════════════════════════════════════════════
+  const IMG_BASE = 'https://image.tmdb.org/t/p/';
+  let _currentMovieItem = null;
+  let _editingSourceId = null;
+  let _allMovieSources = [];
+
+  async function tmdbFetch(path, params = {}) {
+    const qs = new URLSearchParams(params).toString();
+    const r = await fetch(`/api/tmdb?path=${encodeURIComponent(path)}${qs ? '&' + qs : ''}`);
+    if (!r.ok) throw new Error('Falha na busca TMDB');
+    return r.json();
+  }
+
+  async function doMovieSearch() {
+    const q = document.getElementById('movieSearchInput').value.trim();
+    const type = document.getElementById('searchType').value;
+    const grid = document.getElementById('resultsGrid');
+    if (!q) return;
+
+    grid.innerHTML = '<div class="empty-state">Buscando...</div>';
+    try {
+      const data = await tmdbFetch(`/search/${type}`, { query: q });
+      const results = data.results || [];
+      if (results.length === 0) {
+        grid.innerHTML = '<div class="empty-state">Nenhum resultado encontrado.</div>';
+        return;
+      }
+
+      const ids = results.map(r => r.id);
+      const existing = await fetch('/api/admin-vip', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${_session?.access_token}` },
+        body: JSON.stringify({ action: 'list-sources-for', mediaType: type, ids })
+      }).then(r => r.json()).catch(() => ({ ids: [] }));
+      const existingSet = new Set(existing.ids || []);
+
+      grid.innerHTML = results.map(r => {
+        const title = r.title || r.name || 'Sem título';
+        const year = (r.release_date || r.first_air_date || '').slice(0, 4);
+        const hasSource = existingSet.has(r.id);
+        const poster = r.poster_path
+          ? `<img src="${IMG_BASE}w200${r.poster_path}" alt="" loading="lazy" />`
+          : `<div class="ph">🎬</div>`;
+        return `
+          <div class="result-card" onclick='openMovieModal(${JSON.stringify({
+            id: r.id, title, year, type, poster_path: r.poster_path
+          }).replace(/'/g, "&#39;")})'>
+            ${poster}
+            <div class="info">
+              <div class="t">${title}</div>
+              <div class="y">${year || '—'}</div>
+              <span class="badge ${hasSource ? 'has-sources' : ''}">${hasSource ? '✓ Cadastrado' : 'Sem fonte'}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    } catch (e) {
+      grid.innerHTML = '<div class="empty-state">Erro ao buscar. Tente novamente.</div>';
+    }
+  }
+  document.getElementById('movieSearchInput')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') doMovieSearch();
+  });
+
+  function openMovieModal(item) {
+    _currentMovieItem = item;
+    _editingSourceId = null;
+    document.getElementById('modalTitle').textContent = item.title;
+    document.getElementById('modalSub').textContent =
+      `${item.type === 'movie' ? 'Filme' : 'Série'} · ${item.year || '—'} · TMDB #${item.id}`;
+    setMovieModalPoster(item.poster_path);
+    document.getElementById('episodeFields').style.display = item.type === 'tv' ? 'block' : 'none';
+    document.getElementById('seasonInput').value = 1;
+    document.getElementById('episodeInput').value = 1;
+    document.getElementById('sourceUrlInput').value = '';
+    document.getElementById('sourceLabelInput').value = '';
+    document.getElementById('sourcePriorityInput').value = 10;
+    document.getElementById('urlPreviewBox').style.display = 'none';
+    document.getElementById('deleteInlineBtn').style.display = 'none';
+    document.getElementById('saveSourceBtn').textContent = 'Salvar fonte';
+    document.getElementById('modalOverlay').classList.add('open');
+  }
+
+  function openEditMovieModal(sourceId) {
+    const s = _allMovieSources.find(x => x.id === sourceId);
+    if (!s) return;
+    _currentMovieItem = { id: s.tmdb_id, title: s.title, type: s.media_type, poster_path: s.poster_path };
+    _editingSourceId = s.id;
+    document.getElementById('modalTitle').textContent = s.title;
+    document.getElementById('modalSub').textContent =
+      `${s.media_type === 'movie' ? 'Filme' : 'Série'}${s.season ? ` · T${s.season}E${s.episode}` : ''} · TMDB #${s.tmdb_id}`;
+    setMovieModalPoster(s.poster_path);
+    document.getElementById('episodeFields').style.display = s.media_type === 'tv' ? 'block' : 'none';
+    document.getElementById('seasonInput').value = s.season || 1;
+    document.getElementById('episodeInput').value = s.episode || 1;
+    document.getElementById('sourceUrlInput').value = s.source_url;
+    document.getElementById('sourceLabelInput').value = s.source_label;
+    document.getElementById('sourcePriorityInput').value = s.priority;
+    previewMovieUrl(s.source_url);
+    document.getElementById('deleteInlineBtn').style.display = 'inline-block';
+    document.getElementById('saveSourceBtn').textContent = 'Salvar alterações';
+    document.getElementById('modalOverlay').classList.add('open');
+  }
+
+  function setMovieModalPoster(posterPath) {
+    const img = document.getElementById('modalPoster');
+    const ph  = document.getElementById('modalPosterPh');
+    if (posterPath) {
+      img.src = IMG_BASE + 'w200' + posterPath;
+      img.style.display = 'block';
+      ph.style.display = 'none';
+    } else {
+      img.style.display = 'none';
+      ph.style.display = 'flex';
+    }
+  }
+
+  function closeMovieModal() {
+    document.getElementById('modalOverlay').classList.remove('open');
+    document.getElementById('urlPreviewBox').style.display = 'none';
+    document.getElementById('urlPreviewFrame').innerHTML = '';
+    _currentMovieItem = null;
+    _editingSourceId = null;
+  }
+
+  function isDirectVideo(url) {
+    // Mesma regra usada pelo player no site (index.html: isDirectVideoUrl),
+    // mantidas em sincronia de propósito — ver comentário lá.
+    return /\.(mp4|m3u8|mkv|webm)(\?|#|$)/i.test(url);
+  }
+
+  function previewMovieUrl(url) {
+    url = url.trim();
+    const box   = document.getElementById('urlPreviewBox');
+    const pill  = document.getElementById('urlTypePill');
+    const frame = document.getElementById('urlPreviewFrame');
+    if (!url) { box.style.display = 'none'; return; }
+    box.style.display = 'block';
+    frame.innerHTML = '';
+
+    if (isDirectVideo(url)) {
+      const isHttp = url.startsWith('http://');
+      pill.textContent = isHttp ? '⚠️ Arquivo direto (HTTP — mixed content!)' : '✅ Arquivo direto (HTTPS)';
+      pill.style.background = isHttp ? 'rgba(239,68,68,0.15)' : 'rgba(34,197,94,0.15)';
+      pill.style.color      = isHttp ? 'var(--red)' : 'var(--green)';
+      if (isHttp) {
+        frame.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--red);font-size:0.8rem;padding:12px;text-align:center;">
+          ⚠️ Links <b>http://</b> não rodam em sites https://.<br>O player usará proxy automático no site.
+        </div>`;
+      } else {
+        const vid = document.createElement('video');
+        vid.src = url; vid.controls = true; vid.style.cssText = 'width:100%;height:100%;';
+        frame.appendChild(vid);
+      }
+    } else {
+      pill.textContent = '🎬 Link embed / iframe';
+      pill.style.background = 'rgba(124,58,237,0.15)'; pill.style.color = 'var(--accent)';
+      const ifr = document.createElement('iframe');
+      ifr.src = url; ifr.style.cssText = 'width:100%;height:100%;border:none;';
+      ifr.allow = 'autoplay; encrypted-media; picture-in-picture';
+      frame.appendChild(ifr);
+    }
+  }
+
+  async function saveMovieSource() {
+    if (!_currentMovieItem) return;
+    const url = document.getElementById('sourceUrlInput').value.trim();
+    const label = document.getElementById('sourceLabelInput').value.trim() || 'Player';
+    const priority = parseInt(document.getElementById('sourcePriorityInput').value, 10) || 0;
+
+    if (!url) { showToast('Cole a URL do player antes de salvar.'); return; }
+
+    const isTv = _currentMovieItem.type === 'tv';
+    const season  = isTv ? parseInt(document.getElementById('seasonInput').value, 10) : null;
+    const episode = isTv ? parseInt(document.getElementById('episodeInput').value, 10) : null;
+
+    const btn = document.getElementById('saveSourceBtn');
+    btn.disabled = true;
+    btn.textContent = 'Salvando...';
+
+    const action = _editingSourceId ? 'update-source' : 'create-source';
+    const result = await fetch('/api/admin-vip', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${_session?.access_token}` },
+      body: JSON.stringify({
+        action,
+        sourceId: _editingSourceId,
+        tmdb_id: _currentMovieItem.id,
+        media_type: _currentMovieItem.type,
+        title: _currentMovieItem.title,
+        poster_path: _currentMovieItem.poster_path,
+        season, episode,
+        source_url: url,
+        source_label: label,
+        priority,
+      })
+    }).then(r => r.json()).catch(e => ({ error: e.message }));
+
+    btn.disabled = false;
+    btn.textContent = _editingSourceId ? 'Salvar alterações' : 'Salvar fonte';
+
+    if (result.error) {
+      showToast(String(result.error).includes('duplicate') ? '❌ Essa fonte já está cadastrada pra esse item.' : '❌ Erro ao salvar: ' + result.error);
+      return;
+    }
+
+    showToast(_editingSourceId ? '✅ Fonte atualizada!' : '✅ Fonte salva!');
+    closeMovieModal();
+    loadMovieSources();
+  }
+
+  async function deleteMovieSourceFromModal() {
+    if (!_editingSourceId) return;
+    if (!confirm('Excluir essa fonte? Essa ação não pode ser desfeita.')) return;
+    await deleteMovieSource(_editingSourceId);
+    closeMovieModal();
+  }
+
+  async function deleteMovieSource(sourceId) {
+    if (!_editingSourceId && !confirm('Excluir essa fonte? Essa ação não pode ser desfeita.')) return;
+    const result = await fetch('/api/admin-vip', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${_session?.access_token}` },
+      body: JSON.stringify({ action: 'delete-source', sourceId })
+    }).then(r => r.json()).catch(e => ({ error: e.message }));
+    if (result.error) { showToast('❌ Erro: ' + result.error); return; }
+    showToast('✅ Fonte excluída.');
+    loadMovieSources();
+  }
+
+  async function toggleMovieSourceActive(sourceId, currentlyActive) {
+    const result = await fetch('/api/admin-vip', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${_session?.access_token}` },
+      body: JSON.stringify({ action: 'toggle-source', sourceId, isActive: !currentlyActive })
+    }).then(r => r.json()).catch(e => ({ error: e.message }));
+    if (result.error) { showToast('❌ Erro: ' + result.error); return; }
+    loadMovieSources();
+  }
+
+  async function loadMovieSources() {
+    const wrap = document.getElementById('recentSourcesWrap');
+    const result = await fetch('/api/admin-vip', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${_session?.access_token}` },
+      body: JSON.stringify({ action: 'list-sources' })
+    }).then(r => r.json()).catch(e => ({ error: e.message }));
+
+    if (result.error) {
+      wrap.innerHTML = '<div class="empty-state">Erro ao carregar fontes.</div>';
+      return;
+    }
+    _allMovieSources = result.sources || [];
+    renderGroupedSources();
+  }
+
+  function renderGroupedSources() {
+    const wrap = document.getElementById('recentSourcesWrap');
+    const filter = (document.getElementById('filterInput')?.value || '').trim().toLowerCase();
+
+    let sources = _allMovieSources;
+    if (filter) sources = sources.filter(s => s.title.toLowerCase().includes(filter));
+
+    if (sources.length === 0) {
+      wrap.innerHTML = `<div class="empty-state">${filter ? 'Nenhum título encontrado com esse filtro.' : 'Nenhuma fonte cadastrada ainda. Busque um título acima para começar.'}</div>`;
+      return;
+    }
+
+    const groups = new Map();
+    sources.forEach(s => {
+      const key = s.media_type + ':' + s.tmdb_id;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(s);
+    });
+
+    const groupList = [...groups.entries()].sort((a, b) => {
+      const latestA = Math.max(...a[1].map(s => new Date(s.created_at).getTime()));
+      const latestB = Math.max(...b[1].map(s => new Date(s.created_at).getTime()));
+      return latestB - latestA;
+    });
+
+    wrap.innerHTML = groupList.map(([key, items]) => {
+      const first = items[0];
+      const isTv = first.media_type === 'tv';
+      const poster = first.poster_path
+        ? `<img src="${IMG_BASE}w92${first.poster_path}" alt="" loading="lazy" />`
+        : `<div class="ph">🎬</div>`;
+
+      const sorted = [...items].sort((a, b) => {
+        if ((a.season || 0) !== (b.season || 0)) return (a.season || 0) - (b.season || 0);
+        return (a.episode || 0) - (b.episode || 0);
+      });
+
+      const rowsHtml = sorted.map(s => {
+        const epTag = s.season ? `T${s.season}E${s.episode}` : '—';
+        return `
+          <div class="source-row">
+            <div class="source-ep-tag">${epTag}</div>
+            <div class="source-row-main">
+              <div class="source-label-text">${s.source_label}</div>
+              <span class="source-url-text" title="${s.source_url}">${s.source_url}</span>
+            </div>
+            <span class="pill ${s.is_active ? 'active' : 'inactive'}">${s.is_active ? 'Ativa' : 'Inativa'}</span>
+            <div class="row-actions">
+              <button onclick="event.stopPropagation(); openEditMovieModal(${s.id})">Editar</button>
+              <button onclick="event.stopPropagation(); toggleMovieSourceActive(${s.id}, ${s.is_active})">${s.is_active ? 'Desativar' : 'Ativar'}</button>
+              <button class="danger" onclick="event.stopPropagation(); deleteMovieSource(${s.id})">Excluir</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      const metaText = isTv
+        ? `Série · ${items.length} fonte${items.length > 1 ? 's' : ''} cadastrada${items.length > 1 ? 's' : ''}`
+        : `Filme · ${items.length} fonte${items.length > 1 ? 's' : ''}`;
+
+      return `
+        <div class="title-group" id="group-${key.replace(':','-')}">
+          <div class="title-group-head" onclick="toggleMovieGroup('group-${key.replace(':','-')}')">
+            ${poster}
+            <div class="title-group-info">
+              <div class="name">${first.title}</div>
+              <div class="meta">${metaText}</div>
+            </div>
+            <div class="title-group-chevron">▾</div>
+          </div>
+          <div class="title-group-body">
+            ${rowsHtml}
+            <button class="title-group-add" onclick='event.stopPropagation(); openMovieModal(${JSON.stringify({
+              id: first.tmdb_id, title: first.title, type: first.media_type, poster_path: first.poster_path
+            }).replace(/'/g, "&#39;")})'>${isTv ? '+ Adicionar episódio / servidor' : '+ Adicionar servidor'}</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function toggleMovieGroup(groupId) {
+    document.getElementById(groupId)?.classList.toggle('open');
   }
 
   // ── TOAST ──

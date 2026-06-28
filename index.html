@@ -3314,6 +3314,7 @@
       _currentUser = session.user;
       updateAuthUI(_currentUser);
       closeAuthModal();
+      trackLogin(_currentUser);
       // Load cloud data on login
       await syncFromCloud();
       await refreshVipStatus();
@@ -3331,6 +3332,7 @@
           localStorage.removeItem('sfv_continue');
           showToast('✅ Login realizado com sucesso!');
         }
+        trackLogin(_currentUser);
         await syncFromCloud();
         await refreshVipStatus();
       }
@@ -3340,6 +3342,25 @@
         updateVipUI();
       }
     });
+  }
+
+  // Registra/atualiza o perfil do usuário (email, nome, datas de login)
+  // pro super painel poder listar todo mundo que já logou, mesmo quem
+  // nunca ativou nenhum código VIP. "Fire and forget": nunca aguarda nem
+  // bloqueia o fluxo de login, e falhas aqui são silenciosas de propósito
+  // — isso é telemetria interna, não pode nunca impedir o usuário de usar
+  // o site caso a chamada falhe por qualquer motivo.
+  function trackLogin(user) {
+    if (!user) return;
+    fetch('/api/track-login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: user.id,
+        email: user.email || '',
+        name: user.user_metadata?.full_name || user.user_metadata?.name || ''
+      })
+    }).catch(() => {});
   }
 
   // ══════════════════════════════════════
