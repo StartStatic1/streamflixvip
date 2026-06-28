@@ -2952,14 +2952,27 @@
     document.body.style.overflow = '';
   }
 
+  // Scheme customizado registrado no app WebToApp (Edit App > Save as Scheme).
+  // Precisa estar cadastrado também no Supabase em Authentication > URL
+  // Configuration > Redirect URLs, exatamente como "streamflixvip://auth-callback".
+  const APP_AUTH_SCHEME = 'streamflixvip://auth-callback';
+
   async function doGoogleLogin() {
     if (!db) { showToast('⚠️ Supabase não configurado'); return; }
     try {
+      // Dentro do app empacotado (WebView), o navegador externo que abre pra
+      // completar o login do Google não tem como "voltar" pro app sozinho se
+      // mandarmos ele de volta pra uma URL https:// comum — o Android só
+      // reabre o app de fato quando o link de retorno usa o scheme próprio
+      // do app (registrado como deep link). No navegador normal, mantemos a
+      // URL https:// de sempre.
+      const redirectTo = isWebView()
+        ? APP_AUTH_SCHEME
+        : window.location.origin + window.location.pathname;
+
       const { error } = await db.auth.signInWithOAuth({
         provider: 'google',
-        options: {
-          redirectTo: window.location.origin + window.location.pathname
-        }
+        options: { redirectTo }
       });
       if (error) throw error;
     } catch(e) {
