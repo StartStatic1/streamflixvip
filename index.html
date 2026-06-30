@@ -17,7 +17,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700;9..144,800&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.15/dist/hls.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.6.5/dist/hls.min.js"></script>
   <style>
     :root {
       --bg: #08080f;
@@ -2609,10 +2609,50 @@
       if (isM3u8(playable)) {
         if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
         if (window.Hls && window.Hls.isSupported()) {
-          hlsInstance = new window.Hls();
+          hlsInstance = new window.Hls({
+            // Buffer maior: crucial pra 4K onde cada segmento é pesado (~50-100MB).
+            // Sem isso, o player para constantemente esperando o próximo chunk.
+            maxBufferLength: 60,          // segundos de vídeo em buffer (padrão: 30)
+            maxMaxBufferLength: 120,      // limite superior do buffer adaptativo
+            maxBufferSize: 200 * 1000 * 1000, // 200MB de buffer em memória (padrão: 60MB)
+            maxBufferHole: 0.5,           // tolera buracos de até 0.5s no buffer (padrão: 0.1)
+            // Recuperação de erro mais agressiva: útil pra fontes instáveis
+            manifestLoadingMaxRetry: 4,
+            levelLoadingMaxRetry: 6,
+            fragLoadingMaxRetry: 6,
+            manifestLoadingRetryDelay: 1000,
+            levelLoadingRetryDelay: 1000,
+            fragLoadingRetryDelay: 1000,
+            // ABR (qualidade adaptativa): começa pelo bitrate mais alto disponível
+            // se a fonte só tem uma qualidade (Xtream), isso não tem efeito.
+            startLevel: -1,               // -1 = automático (escolhe pelo sinal)
+            // CORS: necessário pra fontes de outros domínios via proxy
+            xhrSetup: function(xhr) {
+              xhr.withCredentials = false;
+            },
+          });
           hlsInstance.loadSource(playable);
           hlsInstance.attachMedia(video);
-        } else { video.src = playable; }
+          // Evento de erro: tenta continuar antes de mostrar falha pro usuário
+          hlsInstance.on(window.Hls.Events.ERROR, function(event, data) {
+            if (data.fatal) {
+              switch(data.type) {
+                case window.Hls.ErrorTypes.NETWORK_ERROR:
+                  hlsInstance.startLoad(); // tenta retomar o download
+                  break;
+                case window.Hls.ErrorTypes.MEDIA_ERROR:
+                  hlsInstance.recoverMediaError(); // tenta recuperar o decoder
+                  break;
+                default:
+                  console.warn('HLS.js erro fatal irrecuperável:', data);
+                  break;
+              }
+            }
+          });
+        } else {
+          // Fallback: Safari e iOS suportam HLS nativo sem HLS.js
+          video.src = playable;
+        }
       } else {
         if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
         video.src = playable;
@@ -3341,6 +3381,13 @@
       _currentUser = session?.user || null;
       updateAuthUI(_currentUser);
       if (event === 'SIGNED_IN') {
+        // Limpa o hash da URL: o Supabase deixa #access_token=... exposto após o
+        // redirect. Remove antes de qualquer outra coisa pra não vazar o token
+        // no histórico do navegador e pra garantir que o próximo login não
+        // herde um hash velho (causaria ## duplo no redirectTo).
+        if (window.location.hash && window.location.hash.includes('access_token')) {
+          history.replaceState(null, '', window.location.pathname);
+        }
         closeAuthModal();
         if (!wasSignedIn) {
           // Limpa dados da conta anterior antes de carregar os da nova conta

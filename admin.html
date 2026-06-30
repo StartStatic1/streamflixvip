@@ -799,6 +799,15 @@
   db.auth.onAuthStateChange(async (event, session) => {
     _session = session;
     if (session?.user) {
+      // Limpa o hash da URL: o Supabase deixa #access_token=... visível depois
+      // do redirect. Isso é um problema de segurança (token exposto no histórico
+      // do navegador) e causa o bug do ## duplo se o usuário clicar em "Entrar"
+      // novamente sem recarregar — o href já teria o token antigo no hash, e o
+      // novo token seria concatenado depois formando ##access_token=VELHO#access_token=NOVO.
+      if (window.location.hash && window.location.hash.includes('access_token')) {
+        history.replaceState(null, '', window.location.pathname);
+      }
+
       const { data: adminRow, error: adminErr } = await db
         .from('vip_panel_admins')
         .select('id, display_name, role')
@@ -822,19 +831,17 @@
   });
 
   async function doLogin() {
-    // Força sempre o host www. no redirect: streamflixvip.online (sem www)
-    // tem um redirect 308 configurado na Vercel apontando para o www., e
-    // qualquer redirect feito pelo servidor (antes do JS rodar) descarta o
-    // fragmento "#access_token=..." que o Supabase anexa na volta do login.
-    // Começando o login já em www., o navegador nunca passa por esse 308
-    // no meio do caminho, então o token chega intacto.
-    const canonicalUrl = window.location.href.replace(
-      'https://streamflixvip.online',
-      'https://www.streamflixvip.online'
-    );
+    // Força sempre o host www. no redirect (streamflixvip.online sem www tem
+    // um redirect 308 no Vercel que descarta o #access_token no meio do caminho).
+    // USA APENAS pathname (sem hash): se window.location.href tiver um hash
+    // de uma sessão anterior (ex: #access_token=TOKEN_EXPIRADO), o Supabase
+    // concatenaria o novo token depois, gerando ##access_token=...##access_token=...
+    // e o SDK não reconhece a sessão. Usando só origin+pathname resolvemos isso.
+    const base = (window.location.origin + window.location.pathname)
+      .replace('https://streamflixvip.online', 'https://www.streamflixvip.online');
     await db.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: canonicalUrl }
+      options: { redirectTo: base }
     });
   }
 
