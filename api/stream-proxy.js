@@ -5,19 +5,46 @@
 // costumam servir mp4/m3u8 só em http://, então este endpoint busca o
 // vídeo no servidor de origem e devolve pelo seu domínio https.
 //
-// Uso no frontend:
-//   <video src="https://seu-site.vercel.app/api/stream-proxy?url=ENCODED_URL"></video>
-//
-// IMPORTANTE: troque ALLOWED_HOSTS pelos domínios reais dos seus provedores
-// Xtream antes de publicar. Sem essa lista, qualquer pessoa poderia usar
-// seu proxy pra buscar qualquer URL (abuso de banda/anonimização de tráfego).
+// SEGURANÇA: os domínios permitidos são derivados automaticamente da tabela
+// vip_sources no Supabase. Qualquer fonte que você cadastrar pelo painel
+// admin já libera seu domínio aqui — sem precisar editar código ou fazer
+// novo deploy. Cache de 60s em memória evita query ao banco a cada chunk.
 
-const ALLOWED_HOSTS = [
+const SUPABASE_URL = 'https://gkujbjpvphuvrejpvvtz.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdWpianB2cGh1dnJlanB2dnR6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2OTQ2OTMsImV4cCI6MjA5NDI3MDY5M30.Zoqdn0V6SZOAfhz9kK9NgG6lniJdyVqihLsNT-O8Huw';
+
+// Hosts extras sempre liberados, mesmo que não estejam em vip_sources ainda.
+// Útil pra testes antes de cadastrar no painel.
+const EXTRA_ALLOWED_HOSTS = [
   'unitvlite.xyz',
   'sventank.com',
-  'cdnbr02.com', 
-  // adicione aqui os domínios dos seus outros provedores Xtream
+  'cdnbr02.com',
 ];
+
+let _hostsCache = { hosts: new Set(EXTRA_ALLOWED_HOSTS), fetchedAt: 0 };
+const CACHE_TTL_MS = 60 * 1000;
+
+async function getAllowedHosts() {
+  const now = Date.now();
+  if (now - _hostsCache.fetchedAt < CACHE_TTL_MS) return _hostsCache.hosts;
+  try {
+    const r = await fetch(
+      `${SUPABASE_URL}/rest/v1/vip_sources?select=source_url&is_active=eq.true`,
+      { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
+    );
+    if (r.ok) {
+      const rows = await r.json();
+      const hosts = new Set(EXTRA_ALLOWED_HOSTS);
+      for (const row of rows) {
+        try { hosts.add(new URL(row.source_url).hostname); } catch (_) {}
+      }
+      _hostsCache = { hosts, fetchedAt: now };
+    }
+  } catch (e) {
+    console.error('stream-proxy: falha ao atualizar hosts, mantendo cache:', e);
+  }
+  return _hostsCache.hosts;
+}
 
 export default async function handler(req, res) {
   const { url } = req.query;
@@ -35,8 +62,9 @@ export default async function handler(req, res) {
     return;
   }
 
-  if (!ALLOWED_HOSTS.includes(target.hostname)) {
-    res.status(403).json({ error: 'Domínio não autorizado neste proxy.' });
+  const allowedHosts = await getAllowedHosts();
+  if (!allowedHosts.has(target.hostname)) {
+    res.status(403).json({ error: 'Domínio não autorizado. Cadastre a fonte no painel admin primeiro.' });
     return;
   }
 
