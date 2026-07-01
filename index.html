@@ -848,6 +848,33 @@
       box-shadow:0 12px 40px rgba(0,0,0,0.6);
     }
     .player-wrap iframe { width:100%; height:100%; border:none; display:block; }
+
+    .audio-track-selector { position:absolute; top:12px; right:12px; z-index:20; }
+    .audio-track-btn {
+      display:flex; align-items:center; gap:6px;
+      background:rgba(10,10,16,0.75); backdrop-filter:blur(8px);
+      border:1px solid rgba(255,255,255,0.15); border-radius:20px;
+      padding:7px 13px; color:#fff; font-size:0.78rem; font-weight:600;
+      cursor:pointer; transition:background .2s;
+    }
+    .audio-track-btn:hover { background:rgba(10,10,16,0.9); }
+    .audio-track-btn svg { width:15px; height:15px; flex-shrink:0; }
+    .audio-track-menu {
+      display:none; position:absolute; top:calc(100% + 8px); right:0;
+      background:rgba(15,15,22,0.97); backdrop-filter:blur(12px);
+      border:1px solid rgba(255,255,255,0.12); border-radius:12px;
+      padding:6px; min-width:160px; box-shadow:0 8px 28px rgba(0,0,0,0.5);
+    }
+    .audio-track-menu.open { display:block; }
+    .audio-track-option {
+      display:flex; align-items:center; justify-content:space-between;
+      width:100%; background:none; border:none; color:var(--muted);
+      font-size:0.82rem; font-weight:500; padding:9px 12px; border-radius:8px;
+      cursor:pointer; text-align:left;
+    }
+    .audio-track-option:hover { background:rgba(255,255,255,0.06); color:#fff; }
+    .audio-track-option.active { color:var(--accent2); font-weight:700; }
+    .audio-track-option.active::after { content:'✓'; }
     .player-wrap video { width:100%; height:100%; display:none; }
 
     .server-label { font-size:0.72rem; color:var(--muted); font-weight:800; letter-spacing:.8px; text-transform:uppercase; margin-bottom:12px; display:block; }
@@ -1382,6 +1409,13 @@
         <div class="player-wrap" id="playerWrap">
           <iframe id="playerFrame" allowfullscreen allow="autoplay; encrypted-media; picture-in-picture" referrerpolicy="no-referrer"></iframe>
           <video id="playerVideo" controls playsinline style="display:none; width:100%; height:100%; background:#000"></video>
+          <div class="audio-track-selector" id="audioTrackSelector" style="display:none">
+            <button class="audio-track-btn" onclick="toggleAudioTrackMenu()" title="Selecionar idioma do áudio">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19 9a5 5 0 010 6M22 6a10 10 0 010 12"/></svg>
+              <span id="audioTrackCurrentLabel">Áudio</span>
+            </button>
+            <div class="audio-track-menu" id="audioTrackMenu"></div>
+          </div>
         </div>
         <div class="vip-gate-box" id="vipGateBox" style="display:none">
           <div class="vip-gate-icon">👑</div>
@@ -2542,6 +2576,67 @@
   const STREAM_PROXY_ZEABUR = '';
   let hlsInstance = null;
 
+  // ══════════════════════════════════════
+  // SELETOR DE ÁUDIO (dual áudio via HLS)
+  // ══════════════════════════════════════
+  // Só aparece quando o .m3u8 realmente declara mais de uma faixa de áudio
+  // (#EXT-X-MEDIA:TYPE=AUDIO no manifest). Isso depende de como o vídeo foi
+  // empacotado no servidor de origem — não é algo que o player "inventa";
+  // se o HLS só tem uma faixa, não tem o que escolher e o botão fica oculto.
+  function audioTrackLabel(track, idx) {
+    if (track.name) return track.name;
+    const langNames = { pt: 'Português', 'pt-br': 'Português', en: 'Inglês', es: 'Espanhol', fr: 'Francês', ja: 'Japonês', de: 'Alemão', it: 'Italiano' };
+    const lang = (track.lang || '').toLowerCase();
+    return langNames[lang] || track.lang || `Áudio ${idx + 1}`;
+  }
+
+  function renderAudioTrackSelector(hls) {
+    const tracks = hls.audioTracks || [];
+    const wrap = document.getElementById('audioTrackSelector');
+    const menu = document.getElementById('audioTrackMenu');
+    const currentLabel = document.getElementById('audioTrackCurrentLabel');
+    if (!wrap || !menu) return;
+
+    if (tracks.length <= 1) {
+      wrap.style.display = 'none';
+      return;
+    }
+    wrap.style.display = 'block';
+    const activeIdx = hls.audioTrack;
+    currentLabel.textContent = audioTrackLabel(tracks[activeIdx] || tracks[0], activeIdx);
+    menu.innerHTML = tracks.map((t, i) => `
+      <button class="audio-track-option${i === activeIdx ? ' active' : ''}" onclick="selectAudioTrack(${i})">
+        ${audioTrackLabel(t, i)}
+      </button>
+    `).join('');
+  }
+
+  function hideAudioTrackSelector() {
+    const wrap = document.getElementById('audioTrackSelector');
+    const menu = document.getElementById('audioTrackMenu');
+    if (wrap) wrap.style.display = 'none';
+    if (menu) menu.classList.remove('open');
+  }
+
+  function toggleAudioTrackMenu() {
+    document.getElementById('audioTrackMenu')?.classList.toggle('open');
+  }
+
+  function selectAudioTrack(idx) {
+    if (!hlsInstance) return;
+    hlsInstance.audioTrack = idx; // troca a faixa; HLS.js resincroniza automaticamente
+    document.getElementById('audioTrackMenu')?.classList.remove('open');
+    showToast('🔊 Áudio: ' + audioTrackLabel(hlsInstance.audioTracks[idx], idx));
+  }
+
+  // Fecha o menu de áudio ao clicar fora dele
+  document.addEventListener('click', (e) => {
+    const wrap = document.getElementById('audioTrackSelector');
+    if (wrap && !wrap.contains(e.target)) {
+      document.getElementById('audioTrackMenu')?.classList.remove('open');
+    }
+  });
+
   function isDirectVideoUrl(url) { return /\.(mp4|m3u8|mkv|webm)(\?|#|$)/i.test(url); }
   function isM3u8(url) { return /\.m3u8(\?|#|$)/i.test(url); }
   function resolvePlayableUrl(url) {
@@ -2562,6 +2657,7 @@
     video.removeAttribute('src');
     video.load();
     video.style.display = 'none';
+    hideAudioTrackSelector();
   }
 
   // Atualiza o progresso real no localStorage conforme o <video> nativo toca.
@@ -2649,6 +2745,16 @@
               }
             }
           });
+          // Dual áudio: se o .m3u8 declarar mais de uma faixa via
+          // #EXT-X-MEDIA:TYPE=AUDIO, este evento dispara com a lista
+          // completa. Populamos o seletor só quando há de fato escolha —
+          // uma faixa só não precisa de UI extra.
+          hlsInstance.on(window.Hls.Events.AUDIO_TRACKS_UPDATED, function(event, data) {
+            renderAudioTrackSelector(hlsInstance);
+          });
+          hlsInstance.on(window.Hls.Events.AUDIO_TRACK_SWITCHED, function(event, data) {
+            renderAudioTrackSelector(hlsInstance);
+          });
         } else {
           // Fallback: Safari e iOS suportam HLS nativo sem HLS.js
           video.src = playable;
@@ -2656,6 +2762,7 @@
       } else {
         if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
         video.src = playable;
+        hideAudioTrackSelector();
       }
       video.removeEventListener('timeupdate', onVideoTimeUpdate);
       video.addEventListener('timeupdate', onVideoTimeUpdate);
