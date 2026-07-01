@@ -2637,7 +2637,20 @@
     }
   });
 
-  function isDirectVideoUrl(url) { return /\.(mp4|m3u8|mkv|webm)(\?|#|$)/i.test(url); }
+  // Hosts de embed conhecidos cujas URLs às vezes terminam com o nome do
+  // arquivo original (ex: streamtape.com/e/XXXX/Nome.Do.Filme.1080p.mkv) —
+  // isso engana o teste de extensão abaixo, porque a URL literalmente termina
+  // em .mkv/.mp4 mesmo sendo uma PÁGINA DE EMBED, não um arquivo de vídeo de
+  // verdade. Sempre tratamos esses domínios como iframe, nunca como <video>.
+  const KNOWN_EMBED_HOSTS = ['streamtape.com', 'streamta.pe', 'doodstream.com', 'dood.to', 'dood.watch'];
+
+  function isDirectVideoUrl(url) {
+    try {
+      const hostname = new URL(url).hostname.replace(/^www\./, '');
+      if (KNOWN_EMBED_HOSTS.some(h => hostname === h || hostname.endsWith('.' + h))) return false;
+    } catch (e) { /* URL relativa/inválida: segue pro teste de extensão normal */ }
+    return /\.(mp4|m3u8|mkv|webm)(\?|#|$)/i.test(url);
+  }
   function isM3u8(url) { return /\.m3u8(\?|#|$)/i.test(url); }
   function resolvePlayableUrl(url) {
     const isHttp = url.startsWith('http://');
