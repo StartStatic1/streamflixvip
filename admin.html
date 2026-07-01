@@ -1280,8 +1280,26 @@
     return /\.(mp4|m3u8|mkv|webm)(\?|#|$)/i.test(url);
   }
 
-  function previewMovieUrl(url) {
-    url = url.trim();
+  // Alguns provedores (Streamtape, Doodstream, etc.) fornecem um bloco de
+  // código <iframe src="..." width="800" ...></iframe> pronto pra copiar, em
+  // vez de só a URL pura. Se o usuário colar esse bloco inteiro no campo, a
+  // gente extrai automaticamente só a URL (src="...") em vez de forçar o
+  // usuário a editar manualmente o HTML antes de colar.
+  function extractEmbedUrl(pasted) {
+    const trimmed = pasted.trim();
+    if (!trimmed.includes('<iframe') && !trimmed.includes('src=')) return trimmed;
+    const match = trimmed.match(/src=["']([^"']+)["']/i);
+    return match ? match[1] : trimmed;
+  }
+
+  function previewMovieUrl(rawValue) {
+    const url = extractEmbedUrl(rawValue);
+    // Se a URL foi extraída de um bloco de embed colado, substitui o valor
+    // visível do campo pela URL limpa (evita salvar o <iframe> inteiro).
+    const input = document.getElementById('sourceUrlInput');
+    if (input && input.value.trim() !== url && (rawValue.includes('<iframe') || rawValue.includes('src='))) {
+      input.value = url;
+    }
     const box   = document.getElementById('urlPreviewBox');
     const pill  = document.getElementById('urlTypePill');
     const frame = document.getElementById('urlPreviewFrame');
@@ -1315,7 +1333,7 @@
 
   async function saveMovieSource() {
     if (!_currentMovieItem) return;
-    const url = document.getElementById('sourceUrlInput').value.trim();
+    const url = extractEmbedUrl(document.getElementById('sourceUrlInput').value.trim());
     const label = document.getElementById('sourceLabelInput').value.trim() || 'Player';
     const priority = parseInt(document.getElementById('sourcePriorityInput').value, 10) || 0;
 
