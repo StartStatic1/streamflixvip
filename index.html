@@ -2801,14 +2801,15 @@
   // isso engana o teste de extensão abaixo, porque a URL literalmente termina
   // em .mkv/.mp4 mesmo sendo uma PÁGINA DE EMBED, não um arquivo de vídeo de
   // verdade. Sempre tratamos esses domínios como iframe, nunca como <video>.
-  const KNOWN_EMBED_HOSTS = ['streamtape.com', 'streamta.pe', 'doodstream.com', 'dood.to', 'dood.watch'];
+  const KNOWN_EMBED_HOSTS = ['streamtape.com', 'streamta.pe', 'doodstream.com', 'dood.to', 'dood.watch', 'voe.sx'];
 
-  // Hosts de embed que abusam de pop-under/redirect e por isso precisam do
-  // iframe travado em sandbox. MegaEmbed/Vidstack NÃO entram aqui: eles
-  // detectam sandbox e se recusam a tocar o vídeo. Lista separada da
-  // KNOWN_EMBED_HOSTS porque "é um embed conhecido" e "precisa de sandbox"
-  // são conceitos relacionados mas não idênticos.
-  const KNOWN_SANDBOX_HOSTS = ['streamtape.com', 'streamta.pe', 'doodstream.com', 'dood.to', 'dood.watch'];
+  // Hosts de embed que precisariam do iframe travado em sandbox pra conter
+  // pop-under/redirect. Lista vazia por ora: testamos com Streamtape/
+  // Doodstream e o sandbox não impede os ads deles (eles têm proteção
+  // anti-bot própria que bloqueia o player de qualquer forma, sandbox ou
+  // não) — só causava problema nos outros embeds sem resolver nada aqui.
+  // Estrutura mantida caso surja um host onde sandbox funcione de verdade.
+  const KNOWN_SANDBOX_HOSTS = [];
 
   function shouldSandboxIframe(url) {
     try {
