@@ -265,6 +265,20 @@
     .btn-primary:active { transform: scale(0.97); }
     .btn-primary:disabled { opacity: .45; cursor: not-allowed; }
 
+    .btn-secondary {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 11px 24px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Outfit', sans-serif;
+      width: 100%;
+    }
+    .btn-secondary:hover { background: var(--surface3, var(--surface2)); }
+
     /* ── RESULTADO GERAÇÃO ── */
     #genResult { display: none; }
     .gen-result-header {
@@ -564,6 +578,7 @@
     <button class="panel-tab active" data-tab="codes" onclick="switchTab('codes')">🎟️ Códigos VIP</button>
     <button class="panel-tab" data-tab="users" onclick="switchTab('users')">👥 Usuários</button>
     <button class="panel-tab" data-tab="movies" onclick="switchTab('movies')">🎬 Filmes &amp; Séries</button>
+    <button class="panel-tab" data-tab="ads" onclick="switchTab('ads')">📢 Anúncios</button>
   </nav>
 
   <main>
@@ -720,6 +735,61 @@
         <div class="card-title">🎬 Fontes cadastradas</div>
         <input type="text" class="search-input" placeholder="Filtrar por título..." id="filterInput" oninput="renderGroupedSources()" style="margin-bottom:14px"/>
         <div id="recentSourcesWrap"></div>
+      </div>
+    </section>
+
+    <!-- ════════════ ABA: ANÚNCIOS ════════════ -->
+    <section id="tab-ads" class="tab-panel" style="display:none">
+      <div class="card">
+        <div class="card-title">📢 Novo anúncio</div>
+        <p style="color:var(--muted);font-size:0.82rem;margin:-4px 0 16px">
+          Cole aqui um script (ex: <code>&lt;script async src="..."&gt;&lt;/script&gt;</code>) ou uma URL direta
+          de pop-under. VIP nunca vê nenhum anúncio, independente do que estiver cadastrado aqui.
+        </p>
+
+        <label>Nome (só pra você identificar)</label>
+        <input type="text" id="adNameInput" placeholder="ex: Monetag Pop-under"/>
+
+        <div style="display:flex;gap:10px;margin-top:14px">
+          <div style="flex:1">
+            <label>Tipo de anúncio</label>
+            <select id="adTypeInput">
+              <option value="popunder">Pop-under</option>
+              <option value="direct_link">Link Direto</option>
+              <option value="banner_mobile">Banner Mobile</option>
+              <option value="banner_desktop">Banner Desktop</option>
+            </select>
+          </div>
+          <div style="flex:1">
+            <label>Onde aparece</label>
+            <select id="adPlacementInput">
+              <option value="watch">Só na página de assistir</option>
+              <option value="global">Todo o site</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="margin-top:14px">
+          <label>Formato do conteúdo</label>
+          <select id="adContentTypeInput" onchange="updateAdContentPlaceholder()">
+            <option value="script">Script (tag &lt;script&gt; completa)</option>
+            <option value="url">URL direta (link do pop-under/banner)</option>
+          </select>
+        </div>
+
+        <label style="margin-top:14px">Código ou link do anúncio</label>
+        <textarea id="adContentInput" rows="4" placeholder='Cole a tag <script> ou o link direto aqui...' style="width:100%;font-family:'Courier New',monospace;font-size:0.78rem;resize:vertical"></textarea>
+
+        <label style="margin-top:14px">Prioridade (maior = aparece primeiro se houver mais de um do mesmo tipo)</label>
+        <input type="number" id="adPriorityInput" value="0"/>
+
+        <button class="btn-primary" style="margin-top:16px" id="saveAdBtn" onclick="saveAd()">Salvar anúncio</button>
+        <button class="btn-secondary" style="margin-top:8px;display:none" id="cancelEditAdBtn" onclick="resetAdForm()">Cancelar edição</button>
+      </div>
+
+      <div class="card" style="margin-top:24px">
+        <div class="card-title">📋 Anúncios cadastrados</div>
+        <div class="table-wrap" id="adsListWrap"></div>
       </div>
     </section>
   </main>
@@ -1034,6 +1104,7 @@
       _moviesLoadedOnce = true;
       loadMovieSources();
     }
+    if (tab === 'ads') loadAds();
   }
 
   // ════════════════════════════════════════════════════════════
@@ -1517,6 +1588,174 @@
 
   function toggleMovieGroup(groupId) {
     document.getElementById(groupId)?.classList.toggle('open');
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // ABA: ANÚNCIOS
+  // ════════════════════════════════════════════════════════════
+  let _allAds = [];
+  let _editingAdId = null;
+
+  const AD_TYPE_LABELS = {
+    popunder: 'Pop-under',
+    direct_link: 'Link Direto',
+    banner_mobile: 'Banner Mobile',
+    banner_desktop: 'Banner Desktop',
+  };
+  const AD_PLACEMENT_LABELS = {
+    watch: 'Só ao assistir',
+    global: 'Todo o site',
+  };
+
+  function updateAdContentPlaceholder() {
+    const type = document.getElementById('adContentTypeInput').value;
+    const textarea = document.getElementById('adContentInput');
+    // A sequência "<" + "/script>" abaixo é quebrada de propósito: o
+    // navegador fecha a tag de script ao encontrar essa sequência literal em
+    // QUALQUER lugar do código-fonte, mesmo dentro de uma string JS entre
+    // aspas — o parser HTML não sabe que está "dentro de uma string".
+    textarea.placeholder = type === 'script'
+      ? 'Cole a tag <script async src="...">...<' + '/script> aqui...'
+      : 'Cole a URL direta do anúncio aqui (ex: https://exemplo.com/pop)';
+  }
+
+  async function loadAds() {
+    const data = await api('list-ads');
+    if (data.error) { showToast('❌ ' + data.error); return; }
+    _allAds = data.ads || [];
+    renderAdsList();
+  }
+
+  function renderAdsList() {
+    const wrap = document.getElementById('adsListWrap');
+    if (!_allAds.length) {
+      wrap.innerHTML = `<p style="color:var(--muted);font-size:0.85rem;padding:20px 0;text-align:center">Nenhum anúncio cadastrado ainda.</p>`;
+      return;
+    }
+    wrap.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Tipo</th>
+            <th>Local</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${_allAds.map(ad => `
+            <tr>
+              <td>${escapeHtml(ad.name)}</td>
+              <td>${AD_TYPE_LABELS[ad.ad_type] || ad.ad_type}</td>
+              <td>${AD_PLACEMENT_LABELS[ad.placement] || ad.placement}</td>
+              <td>
+                <span class="pill ${ad.is_active ? 'active' : 'inactive'}">
+                  ${ad.is_active ? 'Ativo' : 'Inativo'}
+                </span>
+              </td>
+              <td style="white-space:nowrap">
+                <button class="btn-secondary" style="width:auto;padding:6px 10px;font-size:0.75rem" onclick='editAd(${JSON.stringify(ad).replace(/'/g, "&#39;")})' title="Editar">✏️</button>
+                <button class="btn-secondary" style="width:auto;padding:6px 10px;font-size:0.75rem" onclick="toggleAd('${ad.id}', ${!ad.is_active})" title="${ad.is_active ? 'Desativar' : 'Ativar'}">
+                  ${ad.is_active ? '⏸️' : '▶️'}
+                </button>
+                <button class="btn-secondary" style="width:auto;padding:6px 10px;font-size:0.75rem" onclick="deleteAd('${ad.id}', '${escapeHtml(ad.name).replace(/'/g, "\\'")}')" title="Excluir">🗑️</button>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  function escapeHtml(str) {
+    return String(str || '').replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+
+  function editAd(ad) {
+    _editingAdId = ad.id;
+    document.getElementById('adNameInput').value = ad.name;
+    document.getElementById('adTypeInput').value = ad.ad_type;
+    document.getElementById('adPlacementInput').value = ad.placement;
+    document.getElementById('adContentTypeInput').value = ad.content_type;
+    document.getElementById('adContentInput').value = ad.content;
+    document.getElementById('adPriorityInput').value = ad.priority || 0;
+    updateAdContentPlaceholder();
+    document.getElementById('saveAdBtn').textContent = 'Salvar alterações';
+    document.getElementById('cancelEditAdBtn').style.display = 'block';
+    document.getElementById('tab-ads').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function resetAdForm() {
+    _editingAdId = null;
+    document.getElementById('adNameInput').value = '';
+    document.getElementById('adTypeInput').value = 'popunder';
+    document.getElementById('adPlacementInput').value = 'watch';
+    document.getElementById('adContentTypeInput').value = 'script';
+    document.getElementById('adContentInput').value = '';
+    document.getElementById('adPriorityInput').value = 0;
+    updateAdContentPlaceholder();
+    document.getElementById('saveAdBtn').textContent = 'Salvar anúncio';
+    document.getElementById('cancelEditAdBtn').style.display = 'none';
+  }
+
+  async function saveAd() {
+    const name = document.getElementById('adNameInput').value.trim();
+    const ad_type = document.getElementById('adTypeInput').value;
+    const placement = document.getElementById('adPlacementInput').value;
+    const content_type = document.getElementById('adContentTypeInput').value;
+    const content = document.getElementById('adContentInput').value.trim();
+    const priority = parseInt(document.getElementById('adPriorityInput').value, 10) || 0;
+
+    if (!name || !content) {
+      showToast('Preencha o nome e o código/link do anúncio.');
+      return;
+    }
+    // Validação básica: se o formato escolhido é "script", o conteúdo colado
+    // deveria realmente conter uma tag <script> — evita salvar por engano
+    // uma URL solta marcada como script (ou vice-versa).
+    if (content_type === 'script' && !content.includes('<script')) {
+      showToast('⚠️ Formato "Script" selecionado, mas o conteúdo colado não parece ter uma tag <script>.');
+      return;
+    }
+
+    const btn = document.getElementById('saveAdBtn');
+    btn.disabled = true;
+    btn.textContent = 'Salvando...';
+
+    const action = _editingAdId ? 'update-ad' : 'create-ad';
+    const result = await api(action, {
+      adId: _editingAdId,
+      name, ad_type, content_type, content, placement, priority,
+    });
+
+    btn.disabled = false;
+    if (result.error) {
+      showToast('❌ ' + (result.error?.message || result.error));
+      btn.textContent = _editingAdId ? 'Salvar alterações' : 'Salvar anúncio';
+      return;
+    }
+
+    showToast(_editingAdId ? '✅ Anúncio atualizado!' : '✅ Anúncio criado!');
+    resetAdForm();
+    loadAds();
+  }
+
+  async function toggleAd(adId, newState) {
+    const result = await api('toggle-ad', { adId, isActive: newState });
+    if (result.error) { showToast('❌ ' + result.error); return; }
+    showToast(newState ? '▶️ Anúncio ativado' : '⏸️ Anúncio desativado');
+    loadAds();
+  }
+
+  async function deleteAd(adId, name) {
+    if (!confirm(`Excluir o anúncio "${name}"? Essa ação não pode ser desfeita.`)) return;
+    const result = await api('delete-ad', { adId });
+    if (result.error) { showToast('❌ ' + result.error); return; }
+    showToast('🗑️ Anúncio excluído');
+    loadAds();
   }
 
   // ── TOAST ──

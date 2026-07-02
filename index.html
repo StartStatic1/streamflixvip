@@ -1729,6 +1729,70 @@
   let _lastAdTriggerAt = 0;
   const AD_TRIGGER_COOLDOWN_MS = 25000; // não deixa disparar de novo antes do popunder anterior já ter sido aberto (20s) + margem
 
+  // ── Anúncios cadastrados pelo painel admin (tabela vip_ads) ──
+  // Carregados uma vez no início (e de novo sempre que o status VIP mudar,
+  // pra sumir/reaparecer sem precisar recarregar a página). Se a tabela
+  // estiver vazia ou a chamada falhar, os ads fixos abaixo (Monetag
+  // hardcoded) continuam funcionando normalmente como fallback — cadastrar
+  // ads pelo painel é opcional, não substitui obrigatoriamente o que já
+  // existe no código.
+  let _dynamicAds = [];
+  let _globalAdsInjected = false;
+
+  async function loadDynamicAds() {
+    if (isVip()) { _dynamicAds = []; removeInjectedGlobalAds(); return; }
+    try {
+      const headers = {};
+      if (_currentUser && db) {
+        const { data: { session } } = await db.auth.getSession();
+        if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+      const res = await fetch('/api/active-ads', { headers });
+      const data = await res.json();
+      _dynamicAds = Array.isArray(data.ads) ? data.ads : [];
+      injectGlobalAdScripts();
+    } catch (e) {
+      console.warn('loadDynamicAds: falha ao buscar anúncios cadastrados, mantendo apenas os fixos.', e);
+    }
+  }
+
+  function findDynamicAd(adType, placement) {
+    return _dynamicAds.find(a => a.ad_type === adType && (!placement || a.placement === placement)) || null;
+  }
+
+  // Scripts com placement "global" (ex: banners que devem aparecer em toda
+  // navegação, não só na página de assistir) são injetados uma vez no
+  // <head>. Marcamos cada um com data-vip-ad-id pra poder removê-los depois
+  // se o usuário virar VIP no meio da sessão (loadDynamicAds chama isso de
+  // novo a cada refreshVipStatus).
+  function injectGlobalAdScripts() {
+    removeInjectedGlobalAds();
+    const globalScripts = _dynamicAds.filter(a => a.placement === 'global' && a.content_type === 'script');
+    for (const ad of globalScripts) {
+      try {
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = ad.content;
+        const scriptTag = wrapper.querySelector('script');
+        if (!scriptTag) continue;
+        const el = document.createElement('script');
+        el.dataset.vipAdId = ad.id;
+        for (const attr of scriptTag.attributes) el.setAttribute(attr.name, attr.value);
+        if (scriptTag.src) { /* atributos já copiados, inclusive src */ }
+        else { el.textContent = scriptTag.textContent; }
+        document.head.appendChild(el);
+      } catch (e) {
+        console.warn('injectGlobalAdScripts: falha ao injetar anúncio', ad.name, e);
+      }
+    }
+    _globalAdsInjected = true;
+  }
+
+  function removeInjectedGlobalAds() {
+    if (!_globalAdsInjected) return;
+    document.querySelectorAll('script[data-vip-ad-id]').forEach(el => el.remove());
+    _globalAdsInjected = false;
+  }
+
   function triggerPlayAd() {
     // VIP não vê anúncios: nem o script do Monetag chega a carregar.
     if (isVip()) return false;
@@ -1741,8 +1805,30 @@
     if (now - _lastAdTriggerAt < AD_TRIGGER_COOLDOWN_MS) return false;
     _lastAdTriggerAt = now;
 
-    // MoneyTag: carrega o script apenas uma vez por sessão
-    if (!adScriptLoaded) {
+    // Pop-under dinâmico cadastrado no painel (content_type: 'script'):
+    // carrega o script uma vez, igual ao Monetag fixo abaixo.
+    const dynamicPopunderScript = _dynamicAds.find(
+      a => a.ad_type === 'popunder' && a.placement === 'watch' && a.content_type === 'script'
+    );
+    if (dynamicPopunderScript && !adScriptLoaded) {
+      adScriptLoaded = true;
+      try {
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = dynamicPopunderScript.content;
+        const scriptTag = wrapper.querySelector('script');
+        if (scriptTag) {
+          const el = document.createElement('script');
+          for (const attr of scriptTag.attributes) el.setAttribute(attr.name, attr.value);
+          if (!scriptTag.src) el.textContent = scriptTag.textContent;
+          document.body.appendChild(el);
+        }
+      } catch (e) { console.warn('Falha ao injetar pop-under dinâmico:', e); }
+      return true;
+    }
+
+    // MoneyTag: carrega o script apenas uma vez por sessão (fallback fixo,
+    // usado quando não há nenhum ad tipo popunder/script cadastrado no painel)
+    if (!adScriptLoaded && !findDynamicAd('popunder', 'watch')) {
       adScriptLoaded = true;
       (function(s){s.dataset.zone='11193235',s.src='https://al5sm.com/tag.min.js'})(
         [document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script'))
@@ -1757,12 +1843,19 @@
 
   // Abre o popup de ad — só deve ser chamado em ação explícita do usuário
   function openAdPopup() {
+    // Se houver um pop-under do tipo "url" cadastrado no painel, usa ele.
+    // Senão, cai no link fixo (Monetag) que já funcionava antes — assim
+    // nada quebra pra quem ainda não cadastrou nenhum anúncio no painel.
+    const dynamicPopunderUrl = _dynamicAds.find(
+      a => a.ad_type === 'popunder' && a.placement === 'watch' && a.content_type === 'url'
+    );
+    const targetUrl = dynamicPopunderUrl ? dynamicPopunderUrl.content : 'https://omg10.com/4/11193234';
     try {
-      var w = window.open('https://omg10.com/4/11193234', '_blank');
+      var w = window.open(targetUrl, '_blank');
       // Fallback: se popup blocker bloquear, usa link invisível
       if (!w || w.closed || typeof w.closed === 'undefined') {
         var a = document.createElement('a');
-        a.href = 'https://omg10.com/4/11193234';
+        a.href = targetUrl;
         a.target = '_blank';
         a.rel = 'noopener';
         a.style.display = 'none';
@@ -3196,6 +3289,7 @@
     if (!_currentUser) {
       _vipStatus = { isVip: false, expiresAt: null, planLabel: null };
       updateVipUI();
+      loadDynamicAds();
       return;
     }
     try {
@@ -3210,6 +3304,7 @@
       console.warn('refreshVipStatus error:', e);
     }
     updateVipUI();
+    loadDynamicAds();
   }
 
   function updateVipUI() {
@@ -3482,7 +3577,7 @@
   // Re-wrap after definition further below — see initAuth
 
   async function initAuth() {
-    if (!db) return;
+    if (!db) { loadDynamicAds(); return; }
     // Handle OAuth redirect
     const { data: { session } } = await db.auth.getSession();
     if (session?.user) {
@@ -3494,6 +3589,10 @@
       await syncFromCloud();
       await refreshVipStatus();
       checkIsAdmin();
+    } else {
+      // Visitante sem sessão: não é VIP por definição, então já carrega os
+      // anúncios normalmente em vez de esperar um login que pode nunca vir.
+      loadDynamicAds();
     }
 
     db.auth.onAuthStateChange(async (event, session) => {
