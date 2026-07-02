@@ -228,5 +228,85 @@ module.exports = async function handler(req, res) {
     return;
   }
 
+  // ── ANÚNCIOS: lista todos (ativos e inativos) para o painel ──
+  if (action === 'list-ads') {
+    const r = await fetch(
+      `${SUPABASE_URL}/rest/v1/vip_ads?select=*&order=created_at.desc`,
+      { headers: svcHeaders }
+    );
+    const rows = await r.json();
+    if (!r.ok) { res.status(502).json({ error: 'Erro ao listar anúncios', detail: rows }); return; }
+    res.status(200).json({ ads: rows });
+    return;
+  }
+
+  // ── ANÚNCIOS: cria novo ──
+  if (action === 'create-ad') {
+    const { name, ad_type, content_type, content, placement, priority } = body;
+    if (!name || !ad_type || !content_type || !content) {
+      res.status(400).json({ error: 'Informe name, ad_type, content_type e content.' });
+      return;
+    }
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/vip_ads`, {
+      method: 'POST',
+      headers: { ...svcHeaders, 'Prefer': 'return=representation' },
+      body: JSON.stringify({
+        name, ad_type, content_type, content,
+        placement: placement || 'watch',
+        priority: Number.isFinite(priority) ? priority : 0,
+      }),
+    });
+    const result = await r.json();
+    if (!r.ok) { res.status(502).json({ error: 'Erro ao criar anúncio', detail: result }); return; }
+    res.status(200).json({ created: result });
+    return;
+  }
+
+  // ── ANÚNCIOS: edita existente ──
+  if (action === 'update-ad') {
+    const { adId, name, ad_type, content_type, content, placement, priority } = body;
+    if (!adId) { res.status(400).json({ error: 'Informe adId' }); return; }
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/vip_ads?id=eq.${encodeURIComponent(adId)}`, {
+      method: 'PATCH',
+      headers: { ...svcHeaders, 'Prefer': 'return=representation' },
+      body: JSON.stringify({
+        name, ad_type, content_type, content, placement, priority,
+        updated_at: new Date().toISOString(),
+      }),
+    });
+    const result = await r.json();
+    if (!r.ok) { res.status(502).json({ error: 'Erro ao atualizar anúncio', detail: result }); return; }
+    res.status(200).json({ updated: result });
+    return;
+  }
+
+  // ── ANÚNCIOS: ativa/desativa sem apagar ──
+  if (action === 'toggle-ad') {
+    const { adId, isActive } = body;
+    if (!adId) { res.status(400).json({ error: 'Informe adId' }); return; }
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/vip_ads?id=eq.${encodeURIComponent(adId)}`, {
+      method: 'PATCH',
+      headers: { ...svcHeaders, 'Prefer': 'return=representation' },
+      body: JSON.stringify({ is_active: !!isActive, updated_at: new Date().toISOString() }),
+    });
+    const result = await r.json();
+    if (!r.ok) { res.status(502).json({ error: 'Erro ao atualizar anúncio', detail: result }); return; }
+    res.status(200).json({ updated: result });
+    return;
+  }
+
+  // ── ANÚNCIOS: exclui ──
+  if (action === 'delete-ad') {
+    const { adId } = body;
+    if (!adId) { res.status(400).json({ error: 'Informe adId' }); return; }
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/vip_ads?id=eq.${encodeURIComponent(adId)}`, {
+      method: 'DELETE',
+      headers: svcHeaders,
+    });
+    if (!r.ok) { const detail = await r.text(); res.status(502).json({ error: 'Erro ao excluir anúncio', detail }); return; }
+    res.status(200).json({ success: true });
+    return;
+  }
+
   res.status(400).json({ error: 'Ação inválida' });
 };
