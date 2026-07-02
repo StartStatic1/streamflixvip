@@ -1411,7 +1411,7 @@
       <div class="detail-main">
         <p class="detail-desc" id="detailDesc"></p>
         <div class="player-wrap" id="playerWrap">
-          <iframe id="playerFrame" allowfullscreen allow="autoplay; encrypted-media; picture-in-picture" referrerpolicy="no-referrer"></iframe>
+          <iframe id="playerFrame" allowfullscreen allow="autoplay; encrypted-media; picture-in-picture"></iframe>
           <video id="playerVideo" controls playsinline style="display:none; width:100%; height:100%; background:#000"></video>
           <div class="audio-track-selector" id="audioTrackSelector" style="display:none">
             <button class="audio-track-btn" onclick="toggleAudioTrackMenu()" title="Selecionar idioma do áudio">
@@ -2977,9 +2977,14 @@
       // Doodstream). MegaEmbed/Vidstack ficam sem sandbox, senão eles
       // detectam a restrição e recusam tocar o vídeo.
       if (shouldSandboxIframe(url)) {
-        iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-presentation allow-forms allow-orientation-lock');
+        iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-presentation allow-forms allow-orientation-lock allow-popups');
+        // Streamtape valida o referer pra liberar o embed; sem ele, a
+        // proteção anti-bot deles bloqueia com "Client blocked!". Os outros
+        // embeds continuam sem enviar referer (mais privado).
+        iframe.setAttribute('referrerpolicy', 'origin');
       } else {
         iframe.removeAttribute('sandbox');
+        iframe.setAttribute('referrerpolicy', 'no-referrer');
       }
       iframe.src = url;
       saveToContinue(currentItem, currentItemType, currentSeason, currentEp, null);
