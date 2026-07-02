@@ -398,6 +398,10 @@
     }
 
     /* ── VIP gate na página de detalhe ── */
+    .watch-banner-ad {
+      margin: 14px 0; display: flex; justify-content: center;
+      align-items: center; min-height: 0; overflow: hidden;
+    }
     .vip-gate-box {
       border:1px solid rgba(240,168,48,0.35); background:var(--gold-soft);
       border-radius:14px; padding:22px 20px; text-align:center;
@@ -1407,7 +1411,7 @@
       <div class="detail-main">
         <p class="detail-desc" id="detailDesc"></p>
         <div class="player-wrap" id="playerWrap">
-          <iframe id="playerFrame" allowfullscreen allow="autoplay; encrypted-media; picture-in-picture" referrerpolicy="no-referrer"></iframe>
+          <iframe id="playerFrame" allowfullscreen allow="autoplay; encrypted-media; picture-in-picture" referrerpolicy="no-referrer" sandbox="allow-scripts allow-same-origin allow-presentation allow-forms allow-orientation-lock"></iframe>
           <video id="playerVideo" controls playsinline style="display:none; width:100%; height:100%; background:#000"></video>
           <div class="audio-track-selector" id="audioTrackSelector" style="display:none">
             <button class="audio-track-btn" onclick="toggleAudioTrackMenu()" title="Selecionar idioma do áudio">
@@ -1417,6 +1421,7 @@
             <div class="audio-track-menu" id="audioTrackMenu"></div>
           </div>
         </div>
+        <div class="watch-banner-ad" id="watchBannerAd" style="display:none"></div>
         <div class="vip-gate-box" id="vipGateBox" style="display:none">
           <div class="vip-gate-icon">👑</div>
           <h3>Lançamento exclusivo VIP</h3>
@@ -1751,6 +1756,7 @@
       const data = await res.json();
       _dynamicAds = Array.isArray(data.ads) ? data.ads : [];
       injectGlobalAdScripts();
+      renderWatchBannerAd();
     } catch (e) {
       console.warn('loadDynamicAds: falha ao buscar anúncios cadastrados, mantendo apenas os fixos.', e);
     }
@@ -1765,21 +1771,35 @@
   // <head>. Marcamos cada um com data-vip-ad-id pra poder removê-los depois
   // se o usuário virar VIP no meio da sessão (loadDynamicAds chama isso de
   // novo a cada refreshVipStatus).
+  // Detecta se o conteúdo cadastrado parece HTML com tag(s) <script>, mesmo
+  // que o campo "Formato do conteúdo" (content_type) tenha sido preenchido
+  // errado no painel (ex: marcado como "url" por engano). Isso torna o
+  // sistema resiliente a erro humano no cadastro, em vez de simplesmente
+  // ignorar silenciosamente um anúncio mal categorizado.
+  function looksLikeScriptHtml(content) {
+    return /<script[\s>]/i.test(content || '');
+  }
+
   function injectGlobalAdScripts() {
     removeInjectedGlobalAds();
-    const globalScripts = _dynamicAds.filter(a => a.placement === 'global' && a.content_type === 'script');
-    for (const ad of globalScripts) {
+    const globalAds = _dynamicAds.filter(a => a.placement === 'global' && looksLikeScriptHtml(a.content));
+    for (const ad of globalAds) {
       try {
         const wrapper = document.createElement('div');
         wrapper.innerHTML = ad.content;
-        const scriptTag = wrapper.querySelector('script');
-        if (!scriptTag) continue;
-        const el = document.createElement('script');
-        el.dataset.vipAdId = ad.id;
-        for (const attr of scriptTag.attributes) el.setAttribute(attr.name, attr.value);
-        if (scriptTag.src) { /* atributos já copiados, inclusive src */ }
-        else { el.textContent = scriptTag.textContent; }
-        document.head.appendChild(el);
+        // Um anúncio pode vir com MAIS DE UMA tag <script> (comum em redes
+        // como Adsterra: uma tag define variáveis de configuração, outra
+        // carrega o script de verdade). Processamos todas, na ordem em que
+        // aparecem, senão a segunda tag nunca seria carregada.
+        const scriptTags = wrapper.querySelectorAll('script');
+        if (!scriptTags.length) continue;
+        scriptTags.forEach((scriptTag, idx) => {
+          const el = document.createElement('script');
+          el.dataset.vipAdId = ad.id + '-' + idx;
+          for (const attr of scriptTag.attributes) el.setAttribute(attr.name, attr.value);
+          if (!scriptTag.src) el.textContent = scriptTag.textContent;
+          document.head.appendChild(el);
+        });
       } catch (e) {
         console.warn('injectGlobalAdScripts: falha ao injetar anúncio', ad.name, e);
       }
@@ -1791,6 +1811,48 @@
     if (!_globalAdsInjected) return;
     document.querySelectorAll('script[data-vip-ad-id]').forEach(el => el.remove());
     _globalAdsInjected = false;
+  }
+
+  // Banners do tipo "banner_mobile"/"banner_desktop" com placement "watch"
+  // aparecem só dentro da página de assistir, escolhendo a variante certa
+  // pela largura da tela atual (768px é o breakpoint padrão do resto do
+  // site para mobile/desktop). Chamada tanto ao abrir a página de detalhe
+  // quanto sempre que os anúncios são recarregados (login/logout/VIP).
+  function renderWatchBannerAd() {
+    const container = document.getElementById('watchBannerAd');
+    if (!container) return; // não estamos na página de detalhe agora
+    container.innerHTML = '';
+    container.style.display = 'none';
+
+    const isMobileScreen = window.innerWidth < 768;
+    const wantedType = isMobileScreen ? 'banner_mobile' : 'banner_desktop';
+    const ad = _dynamicAds.find(a => a.ad_type === wantedType && a.placement === 'watch');
+    if (!ad) return;
+
+    container.style.display = 'flex';
+    if (looksLikeScriptHtml(ad.content)) {
+      const wrapper = document.createElement('div');
+      wrapper.innerHTML = ad.content;
+      wrapper.querySelectorAll('script').forEach(scriptTag => {
+        const el = document.createElement('script');
+        for (const attr of scriptTag.attributes) el.setAttribute(attr.name, attr.value);
+        if (!scriptTag.src) el.textContent = scriptTag.textContent;
+        container.appendChild(el);
+      });
+      // Elementos não-script do bloco colado (ex: <div id="container-xyz">
+      // que algumas redes de anúncio exigem antes do script) também precisam
+      // ir para o DOM real, não só os <script>.
+      Array.from(wrapper.children).forEach(child => {
+        if (child.tagName !== 'SCRIPT') container.appendChild(child.cloneNode(true));
+      });
+    } else {
+      // content_type 'url': trata como um link de banner simples (imagem
+      // clicável) — mais previsível do que tentar advinhar formato de ad.
+      const a = document.createElement('a');
+      a.href = ad.content; a.target = '_blank'; a.rel = 'noopener';
+      a.textContent = ad.name;
+      container.appendChild(a);
+    }
   }
 
   function triggerPlayAd() {
@@ -1805,23 +1867,26 @@
     if (now - _lastAdTriggerAt < AD_TRIGGER_COOLDOWN_MS) return false;
     _lastAdTriggerAt = now;
 
-    // Pop-under dinâmico cadastrado no painel (content_type: 'script'):
-    // carrega o script uma vez, igual ao Monetag fixo abaixo.
+    // Pop-under dinâmico cadastrado no painel: carrega o script uma vez,
+    // igual ao Monetag fixo abaixo. Aceita tanto content_type 'script'
+    // quanto qualquer conteúdo que pareça HTML com <script> (mesmo formulário
+    // preenchido errado no painel), pela mesma razão explicada em
+    // looksLikeScriptHtml() acima.
     const dynamicPopunderScript = _dynamicAds.find(
-      a => a.ad_type === 'popunder' && a.placement === 'watch' && a.content_type === 'script'
+      a => a.ad_type === 'popunder' && a.placement === 'watch' && looksLikeScriptHtml(a.content)
     );
     if (dynamicPopunderScript && !adScriptLoaded) {
       adScriptLoaded = true;
       try {
         const wrapper = document.createElement('div');
         wrapper.innerHTML = dynamicPopunderScript.content;
-        const scriptTag = wrapper.querySelector('script');
-        if (scriptTag) {
+        const scriptTags = wrapper.querySelectorAll('script');
+        scriptTags.forEach(scriptTag => {
           const el = document.createElement('script');
           for (const attr of scriptTag.attributes) el.setAttribute(attr.name, attr.value);
           if (!scriptTag.src) el.textContent = scriptTag.textContent;
           document.body.appendChild(el);
-        }
+        });
       } catch (e) { console.warn('Falha ao injetar pop-under dinâmico:', e); }
       return true;
     }
@@ -2531,6 +2596,7 @@
     document.getElementById('detailTrailerBtn').style.display = 'none';
     document.getElementById('detailFavBtn').classList.remove('saved');
     document.getElementById('detailFavLabel').textContent = 'Salvar na lista';
+    renderWatchBannerAd();
 
     const realType = tmdbType(type);
     const detailPath = (realType === 'movie' ? '/movie/' : '/tv/') + id;
